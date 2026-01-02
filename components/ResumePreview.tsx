@@ -100,13 +100,13 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         '--theme-border': baseColor, // 使用主题主色作为边框色，即用户提到的“红框”
         '--theme-accent': isBaseColorLight ? '#f43f5e' : '#fb7185', // 辅助色，用于点缀
       } as React.CSSProperties,
-      pageClass: `a4-page bg-[var(--theme-card)] text-[var(--theme-text)] relative flex flex-col ${isPrinting ? 'shadow-none w-[210mm] h-[297mm] overflow-visible mb-0 border-none !m-0' : 'shadow-[0_30px_60px_-15px_var(--theme-shadow)] h-[297mm] overflow-hidden'}`,
+      pageClass: `a4-page bg-[var(--theme-card)] text-[var(--theme-text)] relative flex flex-col ${isPrinting ? 'shadow-none w-[210mm] h-[296.8mm] overflow-hidden mb-0 border-none !m-0' : 'shadow-[0_30px_60px_-15px_var(--theme-shadow)] h-[297mm] overflow-hidden'}`,
       headerClass: `h-28 px-[55px] flex items-center justify-between relative z-10 flex-shrink-0`,
       headerStyle: { background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' },
       titleClass: 'text-2xl font-black tracking-[0.2em]',
       subTitleClass: 'opacity-70 text-xs font-bold uppercase tracking-widest whitespace-nowrap',
       sectionTitleClass: 'text-lg font-bold mb-4 pb-2 border-b-2 border-[var(--theme-secondary)] text-[var(--theme-readable-primary)] flex items-center gap-2 relative z-10',
-      contentPanelClass: 'mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl relative z-10 flex-1 flex flex-col border-[3px] border-[var(--theme-border)] min-h-0 shadow-sm overflow-hidden',
+      contentPanelClass: `mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl relative z-10 flex-1 flex flex-col border-[3px] border-[var(--theme-border)] min-h-0 shadow-sm ${isPrinting ? 'overflow-visible' : 'overflow-hidden'}`,
       imageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
       compactImageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
     };
@@ -379,7 +379,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       ref={ref}
       className={`origin-top-left flex font-sans resume-print-root
         ${(isPrinting ? 'single' : layoutMode) === 'grid' ? 'flex-row flex-wrap justify-center gap-10' : 'flex-col gap-20'} 
-        ${isPrinting ? '!gap-0 !w-[210mm] !transform-none !m-0 !p-0 !shadow-none' : ''}`}
+        ${isPrinting ? '!gap-0 !w-[210mm] !transform-none !m-0 !p-0 !shadow-none !flex-col' : ''}`}
       style={{ 
         transform: isPrinting ? 'none' : `scale(${scale})`, 
         ...style.wrapper,

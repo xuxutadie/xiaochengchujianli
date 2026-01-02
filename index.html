@@ -96,17 +96,21 @@
         .a4-page {
           display: block !important;
           width: 210mm !important;
-          height: 297mm !important;
+          height: 296.8mm !important;
           margin: 0 !important;
           padding: 0 !important;
-          page-break-after: always !important;
+          page-break-after: auto !important;
           page-break-inside: avoid !important;
-          page-break-before: avoid !important;
+          page-break-before: auto !important;
           position: relative !important;
           overflow: hidden !important;
           box-shadow: none !important;
           border: none !important;
           background: white !important;
+        }
+
+        .a4-page + .a4-page {
+          page-break-before: always !important;
         }
 
         * {

@@ -233,7 +233,7 @@ function App() {
           document.body.removeChild(toast);
         }
       }
-    }, 1000); 
+    }, 1500); 
   };
 
   const handleReset = () => {
@@ -381,7 +381,7 @@ function App() {
              // Override specific widths and paddings for print
              className={`transition-all duration-500 ease-out ${isPrinting ? 'm-0 shadow-none !transition-none' : 'mx-auto'}`}
               style={{ 
-                width: isPrinting ? '794px' : (layoutMode === 'grid' ? (794 * 3 + 200) * scale : 794 * scale), 
+                width: isPrinting ? '210mm' : (layoutMode === 'grid' ? (794 * 3 + 200) * scale : 794 * scale), 
                 height: 'auto', 
                 paddingBottom: isPrinting ? '0' : '80px',
                 filter: isPrinting ? 'none' : 'drop-shadow(0 25px 50px -12px rgb(0 0 0 / 0.15))',
