@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>智绘童心 - AI 简历生成器</title>
+    <title>智绘简历 - AI 简历生成器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -46,6 +46,10 @@
         overflow: hidden;
         position: relative;
         box-sizing: border-box;
+      }
+      
+      .a4-page + .a4-page {
+        page-break-before: always;
       }
 
       @media print {

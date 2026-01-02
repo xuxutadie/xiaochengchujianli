@@ -6,6 +6,7 @@ interface ResumePreviewProps {
   data: ResumeData;
   scale?: number;
   layoutMode?: 'single' | 'grid';
+  isPrinting?: boolean;
 }
 
 const chunk = <T,>(arr: T[] | undefined | null, size: number): T[][] => {
@@ -26,7 +27,7 @@ const isLightColor = (color: string) => {
   return brightness > 185; // Threshold for "light" color
 };
 
-const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single' }, ref) => {
+const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single', isPrinting = false }, ref) => {
   
   const getThemeStyles = () => {
     const baseColor = data.themeColor || '#2563eb';
@@ -99,15 +100,15 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         '--theme-border': baseColor, // 使用主题主色作为边框色，即用户提到的“红框”
         '--theme-accent': isBaseColorLight ? '#f43f5e' : '#fb7185', // 辅助色，用于点缀
       } as React.CSSProperties,
-      pageClass: 'bg-[var(--theme-card)] text-[var(--theme-text)] relative overflow-hidden shadow-[0_30px_60px_-15px_var(--theme-shadow)] print:shadow-none flex flex-col h-[1123px]',
+      pageClass: `a4-page bg-[var(--theme-card)] text-[var(--theme-text)] relative flex flex-col ${isPrinting ? 'shadow-none w-[210mm] h-[297mm] overflow-visible mb-0 border-none !m-0' : 'shadow-[0_30px_60px_-15px_var(--theme-shadow)] h-[297mm] overflow-hidden'}`,
       headerClass: `h-28 px-[55px] flex items-center justify-between relative z-10 flex-shrink-0`,
       headerStyle: { background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' },
       titleClass: 'text-2xl font-black tracking-[0.2em]',
       subTitleClass: 'opacity-70 text-xs font-bold uppercase tracking-widest whitespace-nowrap',
       sectionTitleClass: 'text-lg font-bold mb-4 pb-2 border-b-2 border-[var(--theme-secondary)] text-[var(--theme-readable-primary)] flex items-center gap-2 relative z-10',
-      contentPanelClass: 'mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl shadow-sm relative z-10 flex-1 flex flex-col justify-center border-[3px] border-[var(--theme-border)] min-h-0 overflow-hidden',
-      imageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] shadow-lg shadow-[var(--theme-shadow)] transition-all relative z-10',
-      compactImageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] shadow-lg shadow-[var(--theme-shadow)] transition-all relative z-10',
+      contentPanelClass: 'mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl relative z-10 flex-1 flex flex-col border-[3px] border-[var(--theme-border)] min-h-0 shadow-sm overflow-hidden',
+      imageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
+      compactImageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
     };
   };
 
@@ -124,6 +125,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           src={data.pageBackground} 
           className="absolute inset-0 w-full h-full object-cover opacity-[0.65]" 
           alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
     );
@@ -375,13 +377,14 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
   return (
     <div 
       ref={ref}
-      className={`origin-top-left print:!transform-none print:!m-0 print:!p-0 print:!shadow-none flex font-sans resume-print-root print:!w-[210mm]
-        ${layoutMode === 'grid' ? 'flex-row flex-wrap justify-center gap-10 print:flex-col print:gap-0' : 'flex-col gap-20 print:gap-0'}`}
+      className={`origin-top-left flex font-sans resume-print-root
+        ${(isPrinting ? 'single' : layoutMode) === 'grid' ? 'flex-row flex-wrap justify-center gap-10' : 'flex-col gap-20'} 
+        ${isPrinting ? '!gap-0 !w-[210mm] !transform-none !m-0 !p-0 !shadow-none' : ''}`}
       style={{ 
-        transform: `scale(${scale})`, 
+        transform: isPrinting ? 'none' : `scale(${scale})`, 
         ...style.wrapper,
-        width: layoutMode === 'grid' ? 'auto' : '210mm',
-        maxWidth: layoutMode === 'grid' ? 'calc(210mm * 3 + 100px)' : '210mm',
+        width: isPrinting ? '210mm' : ((layoutMode === 'grid' ? 'auto' : '210mm')),
+        maxWidth: isPrinting ? '210mm' : ((layoutMode === 'grid' ? 'calc(210mm * 3 + 100px)' : '210mm')),
       }}
     >
       {/* ---------------- COVER PAGE ---------------- */}
@@ -390,6 +393,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <img 
             src={data.cover.backgroundImage} 
             className="absolute inset-0 w-full h-full object-cover opacity-90" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
           <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[var(--theme-card)] to-transparent z-10"></div>
         </div>
@@ -446,7 +450,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                <img src={data.basicInfo.avatarUrl} className="w-32 h-40 object-cover rounded-xl shadow-lg border-2 border-[var(--theme-card)] relative z-10" />
                <div className="absolute -inset-2 bg-[var(--theme-primary)] opacity-10 rounded-2xl -rotate-3 z-0"></div>
              </div>
-             <div className="flex-1 grid grid-cols-2 gap-y-5 gap-x-10 text-sm">
+             <div className="flex-1 grid grid-cols-2 gap-y-5 gap-x-10 text-sm py-4">
                 <div className="border-b border-[var(--theme-primary)]/10 pb-1">
                   <span className="text-[var(--theme-readable-primary)]/40 block text-[10px] font-black uppercase tracking-wider">姓名 / Name</span>
                   <span className="font-black text-xl text-[var(--theme-readable-primary)]">{data.basicInfo.name}</span>
@@ -554,13 +558,17 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             <span className={style.titleClass}>素质表现</span>
             <span className={style.subTitleClass}>Comprehensive Evaluation {pageIndex + 2}</span>
           </div>
-          <div className={style.contentPanelClass}>
+          <div className={style.contentPanelClass + " justify-center"}>
             <h3 className={style.sectionTitleClass}><BookOpen size={18}/> 素质报告 & 评价手册 (续)</h3>
             <div className="flex flex-col gap-y-4 px-4 py-2 justify-center min-h-0 overflow-hidden">
                {pageItems.map((item, i) => (
-                 <div key={item.id || i} className={`w-full ${style.compactImageContainerClass} flex flex-col shadow-xl flex-1 min-h-0 overflow-hidden`}>
-                   <div className="flex-1 bg-[var(--theme-secondary)]/20 border-b border-[var(--theme-secondary)] overflow-hidden">
-                     <img src={item.url} className="w-full h-full object-contain" />
+                 <div key={item.id || i} className={`w-full ${style.compactImageContainerClass} flex flex-col shadow-xl flex-1 min-h-0 overflow-hidden !max-h-[380px]`}>
+                   <div className="flex-1 bg-[var(--theme-secondary)]/20 border-b border-[var(--theme-secondary)] overflow-hidden flex items-center justify-center">
+                     <img 
+                       src={item.url} 
+                       className="max-w-full max-h-full object-contain" 
+                       style={{ width: 'auto', height: 'auto', objectFit: 'contain' }}
+                     />
                    </div>
                    {item.caption && (
                     <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2.5 flex items-center justify-center shrink-0">
@@ -596,12 +604,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                 return (
                   <div key={i} className="relative">
                     <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10`} />
-                    <div className={`bg-[var(--theme-card)] rounded-lg shadow-sm border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative overflow-hidden group max-w-[92%]
+                    <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
                       ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
                       <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
                       <div className="relative z-10 flex justify-between items-center">
                         <div className="flex flex-col min-w-0 flex-1 mr-4">
-                          <span className={`font-bold text-[var(--theme-readable-primary)] truncate ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
+                          <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
                             {award.name || '未命名荣誉'}
                           </span>
                           <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
@@ -644,12 +652,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            <span className={style.titleClass}>证书展示</span>
            <span className={style.subTitleClass}>Certificates {pageIndex + 1}</span>
          </div>
-         <div className={style.contentPanelClass}>
+         <div className={style.contentPanelClass + " justify-center"}>
           <div className="grid grid-cols-2 grid-rows-2 gap-8 flex-1 min-h-0 overflow-hidden">
             {pageCerts.map((item, i) => (
-               <div key={i} className={`${style.imageContainerClass} flex flex-col min-h-0 overflow-hidden`}>
+               <div key={i} className={`${style.imageContainerClass} flex flex-col min-h-0 overflow-hidden !max-h-[350px]`}>
                  <div className="flex-1 bg-[var(--theme-secondary)]/30 flex items-center justify-center p-2 min-h-0">
-                   <img src={item.url} className="max-w-full max-h-full object-contain shadow-sm" />
+                   <img src={item.url} className="max-w-full max-h-full object-contain shadow-sm" style={{ width: 'auto', height: 'auto' }} />
                  </div>
                  {item.caption && (
                     <div className="text-center text-[10px] font-black text-[var(--theme-readable-primary)] bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] py-2 px-4 shrink-0 border-t border-[var(--theme-primary)]/10">
@@ -671,7 +679,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
          <span className={style.titleClass}>兴趣与特长</span>
          <span className={style.subTitleClass}>Hobbies & Specialties</span>
        </div>
-       <div className={style.contentPanelClass}>
+       <div className={style.contentPanelClass + " justify-center"}>
           {/* 第一部分：核心特长 (勋章感设计) */}
           <section className="space-y-6">
              <h3 className="text-xl font-bold text-[var(--theme-readable-primary)] flex items-center gap-2 border-b-2 border-[var(--theme-secondary)] pb-2">
@@ -710,7 +718,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                     return (
                       <div key={i} className={`relative group ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'} overflow-hidden`}>
                         <div className={`w-full h-full overflow-hidden border-[5px] border-[var(--theme-primary)] ${shapeClass} transition-all relative shadow-lg shadow-[var(--theme-shadow)]`}>
-                          <img src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} />
+                          <img src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} style={{ minWidth: '100%', minHeight: '100%' }} />
                           {item.caption && (
                             <div className="absolute bottom-0 left-0 right-0 bg-[var(--theme-readable-primary)] p-1 z-20">
                               <p className="text-white text-[9px] font-black text-center truncate px-2 drop-shadow-md">{item.caption}</p>
@@ -758,7 +766,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             <span className={style.titleClass}>社会实践</span>
             <span className={style.subTitleClass}>Social Practice</span>
           </div>
-          <div className={style.contentPanelClass}>
+          <div className={style.contentPanelClass + " justify-center"}>
             <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-hidden">
               {/* 文字描述 */}
               {data.socialPractice.content && (
@@ -781,9 +789,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               {data.socialPractice.images.length > 0 && (
                 <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden">
                   {data.socialPractice.images.slice(0, 4).map((item, i) => (
-                    <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden`}>
+                    <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[300px]`}>
                       <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
-                        <img src={item.url} className="w-full h-full object-contain" />
+                        <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
                       </div>
                       {item.caption && (
                         <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">

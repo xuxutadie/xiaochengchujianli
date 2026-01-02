@@ -4,7 +4,6 @@ import ResumeForm from './components/ResumeForm';
 import ResumePreview from './components/ResumePreview';
 import ThemeSelector from './components/ThemeSelector';
 import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
 
 const STORAGE_KEY = 'smart-resume-kid-data-v1';
 
@@ -97,6 +96,7 @@ function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [saveError, setSaveError] = useState(false); 
   const [isExporting, setIsExporting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -197,20 +197,43 @@ function App() {
 
   const handlePrint = () => {
     const originalTitle = document.title;
-    document.title = `小升初简历-${data.basicInfo.name || '未命名'}`;
+    const fileName = `小升初简历-${data.basicInfo.name || '未命名'}`;
+    document.title = fileName;
     
+    // 进入导出模式
+    setIsExporting(true);
+    setIsPrinting(true);
+    
+    // 如果当前是网格模式，先临时切换回单列模式
+    const currentMode = layoutMode;
+    if (currentMode === 'grid') {
+      setLayoutMode('single');
+    }
+
     // Create a temporary toast to guide user
     const toast = document.createElement('div');
     toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl z-[9999] font-bold no-print animate-bounce';
-    toast.innerHTML = '💡 提示：在打印设置中选择“另存为 PDF”，边距设为“无”即可获得完美简历！';
+    toast.innerHTML = '🚀 正在为您生成高清 PDF，请稍等...';
     document.body.appendChild(toast);
     
-    window.focus();
+    // 延迟更长时间确保渲染完成，特别是图片和布局切换
     setTimeout(() => {
+      try {
         window.print();
+      } catch (error) {
+        console.error('Print failed:', error);
+      } finally {
         document.title = originalTitle;
-        setTimeout(() => document.body.removeChild(toast), 3000);
-    }, 100);
+        setIsPrinting(false);
+        setIsExporting(false);
+        if (currentMode === 'grid') {
+          setLayoutMode('grid');
+        }
+        if (document.body.contains(toast)) {
+          document.body.removeChild(toast);
+        }
+      }
+    }, 1000); 
   };
 
   const handleReset = () => {
@@ -238,7 +261,7 @@ function App() {
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight leading-none">
-              智绘童心
+              智绘简历
             </h1>
             <p className={`text-[10px] uppercase tracking-[0.2em] font-extrabold mt-1.5 opacity-90 ${data.darkMode ? 'text-accent' : 'text-accent'}`}>
               Smart Resume Builder
@@ -356,15 +379,17 @@ function App() {
            <div 
              ref={contentRef}
              // Override specific widths and paddings for print
-             className="print:!w-full print:!h-auto print:!pb-0 transition-all duration-500"
-             style={{ 
-               width: layoutMode === 'grid' ? (794 * 3 + 200) * scale : 794 * scale, 
-               height: 'auto', 
-               paddingBottom: '80px',
-               filter: 'drop-shadow(0 25px 50px -12px rgb(0 0 0 / 0.15))'
-             }}
+             className={`transition-all duration-500 ease-out ${isPrinting ? 'm-0 shadow-none !transition-none' : 'mx-auto'}`}
+              style={{ 
+                width: isPrinting ? '794px' : (layoutMode === 'grid' ? (794 * 3 + 200) * scale : 794 * scale), 
+                height: 'auto', 
+                paddingBottom: isPrinting ? '0' : '80px',
+                filter: isPrinting ? 'none' : 'drop-shadow(0 25px 50px -12px rgb(0 0 0 / 0.15))',
+                // 在打印时强制移除任何可能导致偏移的样式
+                ...(isPrinting ? { transform: 'none' } : {})
+              }}
            >
-              <ResumePreview data={data} scale={scale} layoutMode={layoutMode} />
+              <ResumePreview data={data} scale={isPrinting ? 1 : scale} layoutMode={isPrinting ? 'single' : layoutMode} isPrinting={isPrinting} />
            </div>
         </div>
 
