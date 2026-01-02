@@ -1,0 +1,5 @@
+{
+  "name": "智绘童心 - AI 简历生成器",
+  "description": "专为小学生打造的 AI 智能 A4 简历生成器，集成大模型能力，提供文案润色、排版优化及一键导出 PDF 功能。",
+  "requestFramePermissions": []
+}
