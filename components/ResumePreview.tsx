@@ -191,12 +191,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     const frameStyles: Record<AvatarFrameType, React.ReactNode> = {
       [AvatarFrameType.None]: (
         <AvatarWrapper>
-          <img src={url} className="w-full h-full object-cover" />
+          <img src={url} className="w-full h-full object-cover object-top" />
         </AvatarWrapper>
       ),
       [AvatarFrameType.Classic]: (
         <AvatarWrapper className="border-[8px] border-[var(--theme-card)] ring-4 ring-[var(--theme-primary)] ring-opacity-20">
-          <img src={url} className="w-full h-full object-cover" />
+          <img src={url} className="w-full h-full object-cover object-top" />
         </AvatarWrapper>
       ),
       [AvatarFrameType.Wreath]: (
@@ -228,7 +228,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               </svg>
            </div>
            <AvatarWrapper className="border-[8px] border-[var(--theme-card)] relative z-10 ring-2 ring-[var(--theme-primary)] ring-offset-2 ring-offset-[var(--theme-card)]">
-             <img src={url} className="w-full h-full object-cover" />
+             <img src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
         </div>
       ),
@@ -246,7 +246,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
            
            <AvatarWrapper className="border-4 border-[var(--theme-card)] relative z-20 ring-4 ring-[var(--theme-primary)]">
-             <img src={url} className="w-full h-full object-cover" />
+             <img src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
 
            {[...Array(3)].map((_, i) => (
@@ -295,7 +295,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
            
            <AvatarWrapper className="border-[10px] border-[var(--theme-card)] relative z-10 ring-4 ring-[var(--theme-primary)] ring-opacity-30">
-             <img src={url} className="w-full h-full object-cover" />
+             <img src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
 
            <div className="absolute -top-4 -right-4 z-20">
@@ -447,7 +447,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         <div className={style.contentPanelClass}>
           <div className="flex gap-10 items-center mb-10 bg-[var(--theme-surface)] p-6 rounded-2xl border border-[var(--theme-primary)]/10">
              <div className="relative">
-               <img src={data.basicInfo.avatarUrl} className="w-32 h-40 object-cover rounded-xl shadow-lg border-2 border-[var(--theme-card)] relative z-10" />
+               <img src={data.basicInfo.avatarUrl} className="w-32 h-40 object-cover object-top rounded-xl shadow-lg border-2 border-[var(--theme-card)] relative z-10" />
                <div className="absolute -inset-2 bg-[var(--theme-primary)] opacity-10 rounded-2xl -rotate-3 z-0"></div>
              </div>
              <div className="flex-1 grid grid-cols-2 gap-y-5 gap-x-10 text-sm py-4">
