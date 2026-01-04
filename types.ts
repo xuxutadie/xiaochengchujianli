@@ -68,6 +68,12 @@ export enum AvatarShape {
   Shield = 'shield'
 }
 
+export enum LayoutType {
+  Classic = 'classic',
+  Modern = 'modern',
+  Storybook = 'storybook'
+}
+
 export interface FamilyMember {
   id: string;
   relation: string;
@@ -92,6 +98,7 @@ export interface ImageItem {
 export interface ResumeData {
   // Global Design Config
   theme: ThemeType;
+  layout: LayoutType;
   themeColor: string; // Hex code for primary color override
   darkMode?: boolean; // Enable dark mode for the editor
   pageBackground?: string; // Global background for internal pages
@@ -164,6 +171,12 @@ export interface ResumeData {
     images: ImageItem[];
   };
 
+  // 个人作品集
+  portfolio: {
+    website?: string;
+    images: ImageItem[];
+  };
+
   // Page: Closing
   closingMessage: string; 
 }
@@ -171,6 +184,7 @@ export interface ResumeData {
 // ⚠️ 这里填入默认值。
 export const INITIAL_RESUME_DATA: ResumeData = {
   theme: ThemeType.OceanGradient,
+  layout: LayoutType.Classic,
   themeColor: '#0ea5e9',
   darkMode: false,
   pageBackground: '',
@@ -233,8 +247,12 @@ export const INITIAL_RESUME_DATA: ResumeData = {
   },
   coverLetter: '我是一个性格开朗、热爱学习的阳光少年。在学校里，我尊敬师长，团结同学，成绩优异。我不仅在学习上刻苦钻研，还广泛涉猎课外知识。我对数学和编程有着浓厚的兴趣，希望能进入贵校继续深造，在更广阔的舞台上展示自己，成为一名全面发展的优秀中学生。',
   socialPractice: {
-    content: '',
-    images: []
+    content: '在暑假期间，我参加了社区组织的环保志愿者活动，负责垃圾分类宣传和公园清洁。通过这次活动，我深刻体会到了保护环境的重要性，也锻炼了自己的沟通能力。',
+    images: [],
   },
-  closingMessage: '感谢您在百忙之中阅读我的简历。我相信，每一个结束都是新的开始，我已准备好迎接初中生活的挑战！',
+  portfolio: {
+    website: 'https://myspace.example.com',
+    images: [],
+  },
+  closingMessage: '感谢您阅读我的简历！',
 };

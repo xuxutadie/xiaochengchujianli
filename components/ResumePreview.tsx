@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape } from '../types';
+import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape, LayoutType } from '../types';
 import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare } from 'lucide-react';
 
 interface ResumePreviewProps {
@@ -7,6 +7,7 @@ interface ResumePreviewProps {
   scale?: number;
   layoutMode?: 'single' | 'grid';
   isPrinting?: boolean;
+  showWatermark?: boolean;
 }
 
 const chunk = <T,>(arr: T[] | undefined | null, size: number): T[][] => {
@@ -27,11 +28,12 @@ const isLightColor = (color: string) => {
   return brightness > 185; // Threshold for "light" color
 };
 
-const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single', isPrinting = false }, ref) => {
+const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single', isPrinting = false, showWatermark = false }, ref) => {
   
   const getThemeStyles = () => {
     const baseColor = data.themeColor || '#2563eb';
     const isBaseColorLight = isLightColor(baseColor);
+    const layout = data.layout || LayoutType.Classic;
     
     // For text that needs to be visible against the primary color
     const contrastText = isBaseColorLight ? '#1e293b' : '#ffffff';
@@ -40,7 +42,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     
     // Define gradient mappings
     const gradients: Record<string, string> = {
-      // 多巴胺系列
+      // ... same as before ...
       [ThemeType.DopaminePink]: 'linear-gradient(135deg, #ff4d4f, #ff85c0)',
       [ThemeType.DopamineYellow]: 'linear-gradient(135deg, #fadb14, #ffe58f)',
       [ThemeType.DopamineBlue]: 'linear-gradient(135deg, #1890ff, #69c0ff)',
@@ -85,20 +87,20 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     const isGradient = !!gradients[data.theme];
     const primaryBg = isGradient ? gradients[data.theme] : baseColor;
 
-    return {
+    const baseStyles = {
       wrapper: {
         '--theme-primary': baseColor,
-        '--theme-readable-primary': isBaseColorLight ? '#475569' : baseColor, // 在白色内容上始终使用可读的主色
+        '--theme-readable-primary': readablePrimary,
         '--theme-secondary': `${baseColor}20`,
         '--theme-surface': `${baseColor}08`,
         '--theme-shadow': data.darkMode ? 'rgba(0,0,0,0.4)' : `${baseColor}15`,
-        '--theme-text': isBaseColorLight ? '#334155' : '#1e293b', // 始终使用深色文字，因为内容页是白色的
+        '--theme-text': isBaseColorLight ? '#334155' : '#1e293b',
         '--theme-contrast-text': contrastText,
         '--theme-primary-bg': primaryBg,
-        '--theme-card': '#ffffff', // 始终保持白色内容页
+        '--theme-card': '#ffffff',
         '--theme-input': '#f8fafc',
-        '--theme-border': baseColor, // 使用主题主色作为边框色，即用户提到的“红框”
-        '--theme-accent': isBaseColorLight ? '#f43f5e' : '#fb7185', // 辅助色，用于点缀
+        '--theme-border': baseColor,
+        '--theme-accent': isBaseColorLight ? '#f43f5e' : '#fb7185',
       } as React.CSSProperties,
       pageClass: `a4-page bg-[var(--theme-card)] text-[var(--theme-text)] relative flex flex-col ${isPrinting ? 'shadow-none w-[210mm] h-[296.8mm] overflow-hidden mb-0 border-none !m-0' : 'shadow-[0_30px_60px_-15px_var(--theme-shadow)] h-[297mm] overflow-hidden'}`,
       headerClass: `h-28 px-[55px] flex items-center justify-between relative z-10 flex-shrink-0`,
@@ -106,15 +108,44 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       titleClass: 'text-2xl font-black tracking-[0.2em]',
       subTitleClass: 'opacity-70 text-xs font-bold uppercase tracking-widest whitespace-nowrap',
       sectionTitleClass: 'text-lg font-bold mb-4 pb-2 border-b-2 border-[var(--theme-secondary)] text-[var(--theme-readable-primary)] flex items-center gap-2 relative z-10',
-      contentPanelClass: `mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl relative z-10 flex-1 flex flex-col border-[3px] border-[var(--theme-border)] min-h-0 shadow-sm ${isPrinting ? 'overflow-visible' : 'overflow-hidden'}`,
+      contentPanelClass: `mx-auto w-[684px] mt-8 mb-10 p-6 bg-[var(--theme-card)] rounded-3xl relative z-10 flex-1 flex flex-col border-[3px] border-[var(--theme-border)] shadow-sm ${isPrinting ? 'overflow-visible min-h-[900px]' : 'overflow-hidden min-h-0'}`,
       imageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
-      compactImageContainerClass: 'rounded-xl overflow-hidden border-[5px] border-[var(--theme-primary)] transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-lg shadow-[var(--theme-shadow)]'),
     };
+
+    if (layout === LayoutType.Modern) {
+      return {
+        ...baseStyles,
+        headerClass: `h-32 px-14 flex items-center justify-between relative z-10 flex-shrink-0`,
+        titleClass: 'text-3xl font-black tracking-tight uppercase',
+        subTitleClass: 'opacity-60 text-[10px] font-black tracking-[0.3em] uppercase',
+        sectionTitleClass: 'text-xl font-black mb-6 pb-3 border-b-4 border-[var(--theme-primary)] text-dark flex items-center gap-3 relative z-10 uppercase',
+        contentPanelClass: `mx-auto w-[700px] mt-10 mb-10 p-10 bg-[var(--theme-card)] rounded-none relative z-10 flex-1 flex flex-col border-l-8 border-[var(--theme-primary)] shadow-2xl ${isPrinting ? 'overflow-visible min-h-[900px]' : 'overflow-hidden min-h-0'}`,
+        imageContainerClass: 'rounded-none overflow-hidden border-4 border-dark transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-[10px_10px_0px_0px_var(--theme-primary)]'),
+      };
+    }
+
+    if (layout === LayoutType.Storybook) {
+      return {
+        ...baseStyles,
+        headerClass: `h-32 px-14 flex items-center justify-between relative z-10 flex-shrink-0 bg-gradient-to-r from-[var(--theme-primary)]/20 to-[var(--theme-secondary)]/20`,
+        headerStyle: { background: 'transparent', color: 'var(--theme-readable-primary)' },
+        titleClass: 'text-3xl font-black tracking-tight transform -rotate-1 bg-white px-6 py-2 rounded-2xl shadow-sm border-2 border-[var(--theme-primary)]/10',
+        subTitleClass: 'text-[10px] font-black tracking-widest uppercase opacity-40 italic',
+        sectionTitleClass: 'text-xl font-black mb-6 pb-2 text-[var(--theme-primary)] flex items-center gap-3 relative z-10 before:content-[""] before:absolute before:bottom-0 before:left-0 before:w-12 before:h-1.5 before:bg-[var(--theme-primary)]/30 before:rounded-full',
+        contentPanelClass: `mx-auto w-[684px] mt-8 mb-10 p-8 bg-white/80 backdrop-blur-sm rounded-[3rem] relative z-10 flex-1 flex flex-col border-4 border-dashed border-[var(--theme-primary)]/20 shadow-xl ${isPrinting ? 'overflow-visible min-h-[900px]' : 'overflow-hidden min-h-0'}`,
+        imageContainerClass: 'rounded-[2rem] overflow-hidden border-[6px] border-white ring-4 ring-[var(--theme-primary)]/10 transition-all relative z-10 flex items-center justify-center ' + (isPrinting ? 'shadow-none' : 'shadow-xl transform hover:scale-[1.02] duration-300'),
+      };
+    }
+
+    return baseStyles;
   };
 
+  const layout = data.layout || LayoutType.Classic;
   const style = getThemeStyles();
   const certPages = chunk<ImageItem>(data.certificates, 4);
+  const showPortfolio = !!(data.portfolio.website || (data.portfolio.images && data.portfolio.images.length > 0));
   const showSocialPractice = !!(data.socialPractice.content || (data.socialPractice.images && data.socialPractice.images.length > 0));
+  const portfolioOffset = showPortfolio ? 1 : 0;
   const socialPracticeOffset = showSocialPractice ? 1 : 0;
 
   const PageBackground = () => {
@@ -127,6 +158,67 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           alt=""
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
+      </div>
+    );
+  };
+
+  const WatermarkOverlay = () => {
+    if (!showWatermark) return null;
+    return (
+      <div className="absolute inset-0 z-[100] pointer-events-none overflow-hidden flex flex-col items-center justify-center opacity-[0.08] select-none rotate-[-35deg] scale-150">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="flex gap-20 mb-20 whitespace-nowrap">
+            {[...Array(5)].map((_, j) => (
+              <div key={j} className="text-6xl font-black uppercase tracking-[0.5em] text-[var(--theme-primary)]">
+                智绘简历 预览版
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const StorybookDecoration = () => {
+    if (layout !== LayoutType.Storybook) return null;
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-[0.15]">
+        {/* Playful shapes */}
+        <div className="absolute top-[8%] left-[4%] w-16 h-16 rounded-full border-4 border-[var(--theme-primary)] rotate-12 animate-pulse"></div>
+        <div className="absolute top-[18%] right-[6%] w-12 h-12 bg-[var(--theme-primary)] rounded-2xl rotate-[30deg] opacity-60"></div>
+        <div className="absolute top-[45%] left-[-2%] w-24 h-24 bg-[var(--theme-secondary)] rounded-full blur-2xl"></div>
+        <div className="absolute top-[65%] right-[-3%] w-32 h-32 bg-[var(--theme-primary)] opacity-10 rounded-full blur-3xl"></div>
+        
+        <div className="absolute bottom-[12%] left-[8%] transform -rotate-12">
+          <Star size={40} className="text-[var(--theme-primary)] fill-current" />
+        </div>
+        
+        <div className="absolute bottom-[22%] right-[10%] w-20 h-20 rounded-[2.5rem] border-4 border-dashed border-[var(--theme-primary)] -rotate-[20deg]"></div>
+        
+        {/* Wavy lines / Doodles using SVG */}
+        <svg className="absolute top-[35%] right-[2%] w-24 h-12 text-[var(--theme-primary)] opacity-40" viewBox="0 0 100 40">
+          <path d="M0 20 Q 25 5, 50 20 T 100 20" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+
+        <svg className="absolute bottom-[40%] left-[2%] w-20 h-10 text-[var(--theme-primary)] opacity-30" viewBox="0 0 80 30">
+          <path d="M0 15 C 20 0, 60 30, 80 15" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="6 4" />
+        </svg>
+
+        {/* Floating dots / Confetti */}
+        {[...Array(12)].map((_, i) => (
+          <div 
+            key={i} 
+            className="absolute rounded-full bg-[var(--theme-primary)]"
+            style={{ 
+              width: `${Math.random() * 6 + 4}px`,
+              height: `${Math.random() * 6 + 4}px`,
+              top: `${Math.random() * 90 + 5}%`, 
+              left: `${Math.random() * 96 + 2}%`,
+              opacity: 0.2 + Math.random() * 0.3,
+              transform: `rotate(${Math.random() * 360}deg)`
+            }}
+          ></div>
+        ))}
       </div>
     );
   };
@@ -388,57 +480,163 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       }}
     >
       {/* ---------------- COVER PAGE ---------------- */}
-      <div className={`a4-page ${style.pageClass} flex flex-col items-center`}>
-        <div className="absolute top-0 left-0 w-full h-[65%] overflow-hidden z-0">
-          <img 
-            src={data.cover.backgroundImage} 
-            className="absolute inset-0 w-full h-full object-cover opacity-90" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[var(--theme-card)] to-transparent z-10"></div>
-        </div>
+      <div className={`a4-page ${style.pageClass} flex flex-col items-center overflow-hidden`}>
+        <WatermarkOverlay />
+        <StorybookDecoration />
         
-        {data.cover.showAvatar && (
-            <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-               <RenderAvatar 
-                 url={data.basicInfo.avatarUrl} 
-                 frameType={data.cover.avatarFrame} 
-                 shape={data.cover.avatarShape}
-               />
+        {layout === LayoutType.Modern ? (
+          // Modern Cover
+          <div className="relative w-full h-full flex flex-col">
+            <div className="absolute top-0 left-0 w-full h-[75%] overflow-hidden">
+              <img 
+                src={data.cover.backgroundImage} 
+                className="w-full h-full object-cover" 
+                alt=""
+              />
+              <div className="absolute inset-0 bg-black/10"></div>
             </div>
-        )}
+            <div className="absolute bottom-0 left-0 w-full h-[40%] bg-[var(--theme-card)] p-12 flex flex-col justify-end border-t-8 border-[var(--theme-primary)]">
+               <div className="flex justify-between items-end">
+                 <div>
+                   <h1 className="text-7xl font-black text-dark tracking-tighter uppercase leading-none mb-2">
+                     {data.cover.title}
+                   </h1>
+                   <div className="flex items-center gap-4">
+                     <div className="h-1 w-20 bg-[var(--theme-primary)]"></div>
+                     <h2 className="text-xl font-black uppercase tracking-widest opacity-40">{data.cover.subtitle}</h2>
+                   </div>
+                 </div>
+                 {data.cover.showAvatar && (
+                    <div className="mb-4">
+                      <RenderAvatar 
+                        url={data.basicInfo.avatarUrl} 
+                        frameType={data.cover.avatarFrame} 
+                        shape={data.cover.avatarShape}
+                        size="w-40 h-40"
+                      />
+                    </div>
+                 )}
+               </div>
+               <div className="mt-8 flex justify-between items-center">
+                 <div className="space-y-1">
+                   <h3 className="text-4xl font-black text-dark">{data.basicInfo.name}</h3>
+                   <p className="text-lg font-bold opacity-50 uppercase tracking-widest">{data.basicInfo.school}</p>
+                 </div>
+                 <div className="text-right space-y-1">
+                   <p className="text-sm font-black text-[var(--theme-primary)]">{data.contact.phone}</p>
+                   <p className="text-xs font-bold opacity-40 italic">{data.cover.slogan}</p>
+                 </div>
+               </div>
+            </div>
+          </div>
+        ) : layout === LayoutType.Storybook ? (
+          // Storybook Cover
+          <div className="relative w-full h-full flex flex-col items-center justify-center p-12 overflow-hidden bg-[var(--theme-secondary)]/10">
+            {/* Playful background elements */}
+            <div className="absolute top-10 left-10 w-32 h-32 bg-[var(--theme-primary)] opacity-10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-20 right-10 w-64 h-64 bg-[var(--theme-primary)] opacity-5 rounded-full blur-3xl animate-pulse delay-700"></div>
+            
+            <div className="relative z-10 w-full max-w-2xl bg-white/60 backdrop-blur-sm p-10 rounded-[4rem] border-4 border-dashed border-[var(--theme-primary)]/30 flex flex-col items-center shadow-inner">
+               <div className="mb-8 transform -rotate-2">
+                  <h1 className="text-6xl font-black text-[var(--theme-primary)] tracking-tight drop-shadow-sm mb-2">
+                    {data.cover.title}
+                  </h1>
+                  <div className="h-2 w-full bg-[var(--theme-primary)] opacity-20 rounded-full"></div>
+               </div>
 
-        <div className="absolute bottom-0 w-full h-[35%] flex flex-col items-center justify-start pt-12 z-20 bg-[var(--theme-card)] rounded-t-[3rem]">
-           <h1 className="text-6xl font-extrabold text-[var(--theme-readable-primary)] mb-2 tracking-wide drop-shadow-sm">
-             {data.cover.title}
-           </h1>
-           {data.cover.subtitle && (
-             <h2 className="text-xl tracking-[0.3em] text-[var(--theme-readable-primary)] opacity-30 uppercase font-light mb-6">
-               {data.cover.subtitle}
-             </h2>
-           )}
-           <div className="w-16 h-1.5 bg-[var(--theme-primary)] rounded-full mb-8 opacity-50"></div>
-           <div className="text-center space-y-2 mb-8">
-            <h3 className="text-3xl font-bold text-[var(--theme-readable-primary)]">{data.basicInfo.name}</h3>
-            <p className="text-[var(--theme-readable-primary)]/60 font-medium">{data.basicInfo.school}</p>
-          </div>
-          <div className="flex gap-6 text-sm text-[var(--theme-readable-primary)]/70 bg-[var(--theme-secondary)]/30 px-8 py-3 rounded-full border border-[var(--theme-primary)]/10 shadow-sm">
-            <div className="flex items-center gap-1.5">
-              <Phone size={14} className="text-[var(--theme-readable-primary)]" /> 
-              {data.contact.phone}
+               {data.cover.showAvatar && (
+                  <div className="mb-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                    <RenderAvatar 
+                      url={data.basicInfo.avatarUrl} 
+                      frameType={data.cover.avatarFrame} 
+                      shape={data.cover.avatarShape}
+                      size="w-52 h-52"
+                    />
+                  </div>
+               )}
+
+               <div className="text-center space-y-4 mb-10">
+                  <h3 className="text-4xl font-black text-[var(--theme-readable-primary)] tracking-wider">
+                    {data.basicInfo.name}
+                  </h3>
+                  <div className="inline-block px-6 py-2 bg-[var(--theme-primary)] text-white rounded-full font-bold text-lg shadow-lg transform -rotate-1">
+                    {data.basicInfo.school}
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-8 w-full border-t-2 border-dashed border-[var(--theme-primary)]/20 pt-8">
+                  <div className="flex items-center gap-3 justify-center">
+                    <div className="w-10 h-10 rounded-2xl bg-[var(--theme-secondary)] flex items-center justify-center text-[var(--theme-primary)] shadow-sm">
+                      <Phone size={20} />
+                    </div>
+                    <span className="font-bold text-[var(--theme-readable-primary)]/70">{data.contact.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center">
+                    <div className="w-10 h-10 rounded-2xl bg-[var(--theme-secondary)] flex items-center justify-center text-[var(--theme-primary)] shadow-sm">
+                      <Star size={20} />
+                    </div>
+                    <span className="font-bold text-[var(--theme-readable-primary)]/70 italic">{data.cover.slogan}</span>
+                  </div>
+               </div>
             </div>
-            <div className="w-px h-4 bg-[var(--theme-primary)]/20"></div>
-            <div className="flex items-center gap-1.5">
-              <Star size={14} className="text-[var(--theme-readable-primary)]" />
-              {data.cover.slogan}
-            </div>
           </div>
-        </div>
+        ) : (
+          // Classic Cover (Original)
+          <>
+            <div className="absolute top-0 left-0 w-full h-[65%] overflow-hidden z-0">
+              <img 
+                src={data.cover.backgroundImage} 
+                className="absolute inset-0 w-full h-full object-cover opacity-90" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[var(--theme-card)] to-transparent z-10"></div>
+            </div>
+            
+            {data.cover.showAvatar && (
+                <div className="absolute top-[50%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
+                   <RenderAvatar 
+                     url={data.basicInfo.avatarUrl} 
+                     frameType={data.cover.avatarFrame} 
+                     shape={data.cover.avatarShape}
+                   />
+                </div>
+            )}
+
+            <div className="absolute bottom-0 w-full h-[35%] flex flex-col items-center justify-start pt-12 z-20 bg-[var(--theme-card)] rounded-t-[3rem]">
+               <h1 className="text-6xl font-extrabold text-[var(--theme-readable-primary)] mb-2 tracking-wide drop-shadow-sm">
+                 {data.cover.title}
+               </h1>
+               {data.cover.subtitle && (
+                 <h2 className="text-xl tracking-[0.3em] text-[var(--theme-readable-primary)] opacity-30 uppercase font-light mb-6">
+                   {data.cover.subtitle}
+                 </h2>
+               )}
+               <div className="w-16 h-1.5 bg-[var(--theme-primary)] rounded-full mb-8 opacity-50"></div>
+               <div className="text-center space-y-2 mb-8">
+                <h3 className="text-3xl font-bold text-[var(--theme-readable-primary)]">{data.basicInfo.name}</h3>
+                <p className="text-[var(--theme-readable-primary)]/60 font-medium">{data.basicInfo.school}</p>
+              </div>
+              <div className="flex gap-6 text-sm text-[var(--theme-readable-primary)]/70 bg-[var(--theme-secondary)]/30 px-8 py-3 rounded-full border border-[var(--theme-primary)]/10 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <Phone size={14} className="text-[var(--theme-readable-primary)]" /> 
+                  {data.contact.phone}
+                </div>
+                <div className="w-px h-4 bg-[var(--theme-primary)]/20"></div>
+                <div className="flex items-center gap-1.5">
+                  <Star size={14} className="text-[var(--theme-readable-primary)]" />
+                  {data.cover.slogan}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ---------------- PAGE 1 ---------------- */}
       <div className={`a4-page ${style.pageClass}`}>
         <PageBackground />
+        <WatermarkOverlay />
+        <StorybookDecoration />
         <div className={style.headerClass} style={style.headerStyle}>
           <span className={style.titleClass}>基本档案</span>
           <span className={style.subTitleClass}>Profile & Growth</span>
@@ -552,8 +750,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
 
       {/* ---------------- PAGE: QUALITY REPORTS (REMAINING) ---------------- */}
       {qualityPages.map((pageItems, pageIndex) => (
-        <div key={`quality-${pageIndex}`} className={`a4-page ${style.pageClass}`}>
-          <PageBackground />
+          <div key={`quality-${pageIndex}`} className={`a4-page ${style.pageClass}`}>
+            <PageBackground />
+            <WatermarkOverlay />
           <div className={style.headerClass} style={style.headerStyle}>
             <span className={style.titleClass}>素质表现</span>
             <span className={style.subTitleClass}>Comprehensive Evaluation {pageIndex + 2}</span>
@@ -588,6 +787,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
      {/* ---------------- PAGE: HONORS ---------------- */}
      <div className={`a4-page ${style.pageClass}`}>
        <PageBackground />
+       <WatermarkOverlay />
+       <StorybookDecoration />
        <div className={style.headerClass} style={style.headerStyle}>
          <span className={style.titleClass}>荣誉汇总</span>
          <span className={style.subTitleClass}>Honors & Awards</span>
@@ -648,6 +849,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
      {certPages.map((pageCerts, pageIndex) => (
        <div key={`cert-${pageIndex}`} className={`a4-page ${style.pageClass}`}>
          <PageBackground />
+         <WatermarkOverlay />
+         <StorybookDecoration />
          <div className={style.headerClass} style={style.headerStyle}>
            <span className={style.titleClass}>证书展示</span>
            <span className={style.subTitleClass}>Certificates {pageIndex + 1}</span>
@@ -672,281 +875,426 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
        </div>
      ))}
 
-     {/* ---------------- HOBBIES ---------------- */}
-     <div className={`a4-page ${style.pageClass}`}>
-       <PageBackground />
-       <div className={style.headerClass} style={style.headerStyle}>
-         <span className={style.titleClass}>兴趣与特长</span>
-         <span className={style.subTitleClass}>Hobbies & Specialties</span>
-       </div>
-       <div className={style.contentPanelClass + " justify-center"}>
-          {/* 第一部分：核心特长 (勋章感设计) */}
-          <section className="space-y-6">
-             <h3 className="text-xl font-bold text-[var(--theme-readable-primary)] flex items-center gap-2 border-b-2 border-[var(--theme-secondary)] pb-2">
-               <Award className="fill-[var(--theme-readable-primary)]" size={24}/> 核心特长 (Specialties)
-             </h3>
-             <div className="grid grid-cols-3 gap-4">
-               {(data.hobbies.specialties || []).slice(0, 3).map((spec, i) => (
-                 <div key={i} className="relative group">
-                   <div className="absolute inset-0 bg-[var(--theme-primary)] rounded-xl opacity-5 group-hover:opacity-10 transition-opacity" />
-                   <div className="relative border-2 border-[var(--theme-primary)] border-opacity-20 p-4 rounded-xl flex flex-col items-center text-center space-y-2 bg-[var(--theme-card)] shadow-sm transition-all hover:-translate-y-1 hover:border-opacity-100">
-                     <div className="w-10 h-10 rounded-full bg-[var(--theme-secondary)] flex items-center justify-center text-[var(--theme-readable-primary)]">
-                       <Star size={20} className="fill-current" />
+     {/* ---------------- PAGE: PORTFOLIO ---------------- */}
+     {showPortfolio && (
+       <div className={`a4-page ${style.pageClass}`}>
+         <PageBackground />
+         <WatermarkOverlay />
+         <div className={style.headerClass} style={style.headerStyle}>
+           <span className={style.titleClass}>个人作品集</span>
+           <span className={style.subTitleClass}>Personal Portfolio</span>
+         </div>
+         <div className={style.contentPanelClass + " justify-center"}>
+           <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-hidden">
+             {/* 个人网站 */}
+             {data.portfolio.website && (
+               <div className="bg-[var(--theme-surface)] p-6 rounded-3xl border-2 border-[var(--theme-primary)] border-opacity-10 shadow-sm relative overflow-hidden shrink-0">
+                 <div className="relative z-10 flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-2xl bg-[var(--theme-primary)]/10 flex items-center justify-center text-[var(--theme-primary)]">
+                       <Palette size={24} />
                      </div>
-                     <span className="font-bold text-[var(--theme-readable-primary)] text-sm">{spec}</span>
+                     <div>
+                       <h4 className="text-lg font-bold text-[var(--theme-readable-primary)]">个人主页</h4>
+                       <p className="text-sm text-[var(--theme-readable-primary)]/60">{data.portfolio.website}</p>
+                     </div>
                    </div>
                  </div>
-               ))}
+               </div>
+             )}
+
+             {/* 作品展示 */}
+             {data.portfolio.images.length > 0 && (
+               <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden flex-1">
+                 {data.portfolio.images.slice(0, 8).map((item, i) => (
+                   <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[220px]`}>
+                     <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
+                       <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
+                     </div>
+                     {item.caption && (
+                       <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
+                         <p className="text-[10px] font-black text-[var(--theme-readable-primary)] leading-tight text-center tracking-widest">
+                           {item.caption}
+                         </p>
+                       </div>
+                     )}
+                   </div>
+                 ))}
+               </div>
+             )}
+           </div>
+
+           <div className="pt-6 border-t border-[var(--theme-primary)] border-opacity-10 flex items-center justify-center">
+              <p className="text-sm font-medium italic text-[var(--theme-readable-primary)] opacity-60">
+                “ 每一个作品都是成长的足迹 ”
+              </p>
+           </div>
+         </div>
+         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
+          {String(qualityPages.length + certPages.length + 3).padStart(2, '0')}
+        </div>
+      </div>
+    )}
+
+    {/* ---------------- HOBBIES ---------------- */}
+    <div className={`a4-page ${style.pageClass}`}>
+      <PageBackground />
+      <WatermarkOverlay />
+      <div className={style.headerClass} style={style.headerStyle}>
+        <span className={style.titleClass}>兴趣与特长</span>
+        <span className={style.subTitleClass}>Hobbies & Specialties</span>
+      </div>
+      <div className={style.contentPanelClass + " justify-center"}>
+         {/* 第一部分：核心特长 (勋章感设计) */}
+         <section className="space-y-6">
+            <h3 className="text-xl font-bold text-[var(--theme-readable-primary)] flex items-center gap-2 border-b-2 border-[var(--theme-secondary)] pb-2">
+              <Award className="fill-[var(--theme-readable-primary)]" size={24}/> 核心特长 (Specialties)
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              {(data.hobbies.specialties || []).slice(0, 3).map((spec, i) => (
+                <div key={i} className="relative group">
+                  <div className="absolute inset-0 bg-[var(--theme-primary)] rounded-xl opacity-5 group-hover:opacity-10 transition-opacity" />
+                  <div className="relative border-2 border-[var(--theme-primary)] border-opacity-20 p-4 rounded-xl flex flex-col items-center text-center space-y-2 bg-[var(--theme-card)] shadow-sm transition-all hover:-translate-y-1 hover:border-opacity-100">
+                    <div className="w-10 h-10 rounded-full bg-[var(--theme-secondary)] flex items-center justify-center text-[var(--theme-readable-primary)]">
+                      <Star size={20} className="fill-current" />
+                    </div>
+                    <span className="font-bold text-[var(--theme-readable-primary)] text-sm">{spec}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+         </section>
+
+         <section className="flex flex-col space-y-4 mt-8 flex-1 min-h-0 overflow-hidden">
+            <h3 className="text-xl font-bold text-[var(--theme-readable-primary)] flex items-center gap-2 border-b-2 border-[var(--theme-secondary)] pb-2">
+              <Heart className="fill-[var(--theme-readable-primary)]" size={24}/> 兴趣爱好 (Interests)
+            </h3>
+             
+             <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
+               {/* 左侧：更大的图片展示 */}
+               <div className="flex-[1.2] grid grid-cols-2 gap-3 h-full content-start overflow-hidden">
+                 {data.hobbies.images.slice(0, 5).map((item, i) => {
+                   const shapeClass = 
+                     data.hobbies.imageShape === HobbyShape.Circle ? 'rounded-full' : 
+                     data.hobbies.imageShape === HobbyShape.Diamond ? 'rotate-45 scale-75 rounded-xl' :
+                     data.hobbies.imageShape === HobbyShape.Hexagon ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' : 
+                     'rounded-2xl';
+
+                   return (
+                     <div key={i} className={`relative group ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'} overflow-hidden`}>
+                       <div className={`w-full h-full overflow-hidden border-[5px] border-[var(--theme-primary)] ${shapeClass} transition-all relative shadow-lg shadow-[var(--theme-shadow)]`}>
+                         <img src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} style={{ minWidth: '100%', minHeight: '100%' }} />
+                         {item.caption && (
+                           <div className="absolute bottom-0 left-0 right-0 bg-[var(--theme-readable-primary)] p-1 z-20">
+                             <p className="text-white text-[9px] font-black text-center truncate px-2 drop-shadow-md">{item.caption}</p>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   )
+                 })}
+               </div>
+
+               {/* 右侧：详细描述卡片 */}
+               <div className="flex-1 min-h-0">
+                 <div className="bg-[var(--theme-card)] p-5 rounded-3xl border-2 border-[var(--theme-secondary)] shadow-sm h-full relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-4 opacity-5">
+                     <Quote size={60} className="text-[var(--theme-readable-primary)]" />
+                   </div>
+                   <div className="relative z-10 h-full flex flex-col">
+                     <h4 className="text-lg font-bold text-[var(--theme-readable-primary)] mb-3 flex items-center gap-2 shrink-0">
+                       我的另一面
+                     </h4>
+                     <p className="text-[var(--theme-readable-primary)]/80 leading-relaxed text-sm whitespace-pre-wrap flex-1 overflow-hidden">
+                       {data.hobbies.content}
+                     </p>
+                   </div>
+                 </div>
+               </div>
              </div>
           </section>
-
-          <section className="flex flex-col space-y-4 mt-8 flex-1 min-h-0 overflow-hidden">
-             <h3 className="text-xl font-bold text-[var(--theme-readable-primary)] flex items-center gap-2 border-b-2 border-[var(--theme-secondary)] pb-2">
-               <Heart className="fill-[var(--theme-readable-primary)]" size={24}/> 兴趣爱好 (Interests)
-             </h3>
-              
-              <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
-                {/* 左侧：更大的图片展示 */}
-                <div className="flex-[1.2] grid grid-cols-2 gap-3 h-full content-start overflow-hidden">
-                  {data.hobbies.images.slice(0, 5).map((item, i) => {
-                    const shapeClass = 
-                      data.hobbies.imageShape === HobbyShape.Circle ? 'rounded-full' : 
-                      data.hobbies.imageShape === HobbyShape.Diamond ? 'rotate-45 scale-75 rounded-xl' :
-                      data.hobbies.imageShape === HobbyShape.Hexagon ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]' : 
-                      'rounded-2xl';
-
-                    return (
-                      <div key={i} className={`relative group ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'} overflow-hidden`}>
-                        <div className={`w-full h-full overflow-hidden border-[5px] border-[var(--theme-primary)] ${shapeClass} transition-all relative shadow-lg shadow-[var(--theme-shadow)]`}>
-                          <img src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} style={{ minWidth: '100%', minHeight: '100%' }} />
-                          {item.caption && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-[var(--theme-readable-primary)] p-1 z-20">
-                              <p className="text-white text-[9px] font-black text-center truncate px-2 drop-shadow-md">{item.caption}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* 右侧：详细描述卡片 */}
-                <div className="flex-1 min-h-0">
-                  <div className="bg-[var(--theme-card)] p-5 rounded-3xl border-2 border-[var(--theme-secondary)] shadow-sm h-full relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
-                      <Quote size={60} className="text-[var(--theme-readable-primary)]" />
-                    </div>
-                    <div className="relative z-10 h-full flex flex-col">
-                      <h4 className="text-lg font-bold text-[var(--theme-readable-primary)] mb-3 flex items-center gap-2 shrink-0">
-                        我的另一面
-                      </h4>
-                      <p className="text-[var(--theme-readable-primary)]/80 leading-relaxed text-sm whitespace-pre-wrap flex-1 overflow-hidden">
-                        {data.hobbies.content}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-           </section>
-           
-           <div className="h-16 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] -mx-8 -mb-8 flex items-center px-8 rounded-b-3xl">
-             <p className="text-base font-medium italic opacity-90" style={{ color: 'var(--theme-contrast-text)' }}>
-               “ 保持热忱，去探索未知的精彩世界 ”
-             </p>
-           </div>
-        </div>
-        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + 4).padStart(2, '0')}</div>
-      </div>
-
-      {/* ---------------- PAGE: SOCIAL PRACTICE ---------------- */}
-      {showSocialPractice && (
-        <div className={`a4-page ${style.pageClass}`}>
-          <PageBackground />
-          <div className={style.headerClass} style={style.headerStyle}>
-            <span className={style.titleClass}>社会实践</span>
-            <span className={style.subTitleClass}>Social Practice</span>
+          
+          <div className="h-16 bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-secondary)] -mx-8 -mb-8 flex items-center px-8 rounded-b-3xl">
+            <p className="text-base font-medium italic opacity-90" style={{ color: 'var(--theme-contrast-text)' }}>
+              “ 保持热忱，去探索未知的精彩世界 ”
+            </p>
           </div>
-          <div className={style.contentPanelClass + " justify-center"}>
-            <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-hidden">
-              {/* 文字描述 */}
-              {data.socialPractice.content && (
-                <div className="bg-[var(--theme-surface)] p-6 rounded-3xl border-2 border-[var(--theme-primary)] border-opacity-10 shadow-sm relative overflow-hidden shrink-0">
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
-                    <Quote size={60} className="text-[var(--theme-readable-primary)]" />
-                  </div>
-                  <div className="relative z-10">
-                    <h4 className="text-lg font-bold text-[var(--theme-readable-primary)] mb-2 flex items-center gap-2">
-                      实践感悟
-                    </h4>
-                    <p className="text-[var(--theme-readable-primary)]/80 leading-relaxed text-sm whitespace-pre-wrap">
-                      {data.socialPractice.content}
-                    </p>
-                  </div>
-                </div>
-              )}
-  
-              {/* 图片展示 */}
-              {data.socialPractice.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden">
-                  {data.socialPractice.images.slice(0, 4).map((item, i) => (
-                    <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[300px]`}>
-                      <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
-                        <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
-                      </div>
-                      {item.caption && (
-                        <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
-                          <p className="text-[10px] font-black text-[var(--theme-readable-primary)] leading-tight text-center tracking-widest">
-                            {item.caption}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+       </div>
+       <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + 3).padStart(2, '0')}</div>
+    </div>
 
-            <div className="pt-6 border-t border-[var(--theme-primary)] border-opacity-10 flex items-center justify-center">
-               <p className="text-sm font-medium italic text-[var(--theme-readable-primary)] opacity-60">
-                 “ 在实践中成长，在历练中成才 ”
-               </p>
-            </div>
-          </div>
-          <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
-            {String(qualityPages.length + certPages.length + 5).padStart(2, '0')}
-          </div>
-        </div>
-      )}
-
-      {/* ---------------- PAGE: PERSONAL ESSAY (Independent) ---------------- */}
+    {/* ---------------- PAGE: SOCIAL PRACTICE ---------------- */}
+    {showSocialPractice && (
       <div className={`a4-page ${style.pageClass}`}>
         <PageBackground />
+        <WatermarkOverlay />
+        <StorybookDecoration />
         <div className={style.headerClass} style={style.headerStyle}>
-          <span className={style.titleClass}>自荐信</span>
-          <span className={style.subTitleClass}>Personal Statement</span>
-       </div>
-       <div className={`${style.contentPanelClass} !mt-8 !mb-10 !p-0 overflow-hidden`}>
-           <section className="flex-none flex flex-col min-h-0">
-              <div className="relative bg-[var(--theme-card)] flex flex-col items-center"
-                  style={{ height: '912px', width: '100%' }}> 
-                {/* 稿纸背景层 */}
-                <div className="absolute inset-0 pointer-events-none opacity-35">
-                  <div className="h-full relative w-full">
-                    {/* 横线 (Horizontal lines) */}
-                    <div 
-                      className="absolute inset-0" 
-                      style={{ 
-                        backgroundImage: `linear-gradient(to bottom, var(--theme-readable-primary) 1px, transparent 1px)`,
-                        backgroundSize: '100% 38px',
-                        height: '912px'
-                      }}
-                    />
-                    {/* 竖线 (Vertical lines) */}
-                    <div className="absolute inset-0 grid grid-cols-[repeat(18,1fr)]" style={{ height: '912px', width: '100%' }}>
-                      {Array.from({ length: 18 }).map((_, i) => (
-                        <div 
-                          key={i} 
-                          className={`h-full border-r border-[var(--theme-readable-primary)] ${i === 0 ? 'border-l' : ''}`}
-                        />
-                      ))}
+          <span className={style.titleClass}>社会实践</span>
+          <span className={style.subTitleClass}>Social Practice</span>
+        </div>
+        <div className={style.contentPanelClass + " justify-center"}>
+          <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-hidden">
+            {/* 文字描述 */}
+            {data.socialPractice.content && (
+              <div className="bg-[var(--theme-surface)] p-6 rounded-3xl border-2 border-[var(--theme-primary)] border-opacity-10 shadow-sm relative overflow-hidden shrink-0">
+                <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <Quote size={60} className="text-[var(--theme-readable-primary)]" />
+                </div>
+                <div className="relative z-10">
+                  <h4 className="text-lg font-bold text-[var(--theme-readable-primary)] mb-2 flex items-center gap-2">
+                    实践感悟
+                  </h4>
+                  <p className="text-[var(--theme-readable-primary)]/80 leading-relaxed text-sm whitespace-pre-wrap">
+                    {data.socialPractice.content}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 图片展示 */}
+            {data.socialPractice.images.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden">
+                {data.socialPractice.images.slice(0, 4).map((item, i) => (
+                  <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[300px]`}>
+                    <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
+                      <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
                     </div>
-                    {/* 底部封口线 (Bottom line) */}
-                    <div className="absolute top-[912px] left-0 right-0 border-b border-[var(--theme-readable-primary)]" />
+                    {item.caption && (
+                      <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
+                        <p className="text-[10px] font-black text-[var(--theme-readable-primary)] leading-tight text-center tracking-widest">
+                          {item.caption}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                {/* 文字层 - 保持 100% 确保与背景对齐 */}
-                <div className="relative z-10 text-[24px] leading-[38px] text-black h-full overflow-hidden w-full" 
-                     style={{ 
-                       fontFamily: '"Ma Shan Zheng", cursive',
-                       fontWeight: 400
-                     }}>
-                   <div className="grid grid-cols-[repeat(18,1fr)] h-[38px] mb-[38px] mt-[38px]">
-                     {Array.from({ length: 18 }).map((_, i) => (
-                       <div key={i} className="h-[38px] flex items-center justify-center font-bold">
-                         {i === 6 ? '自' : i === 8 ? '荐' : i === 10 ? '信' : ''}
-                       </div>
-                     ))}
-                   </div>
-                   <div className="flex flex-col text-left text-black">
-                     {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
-                       <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
-                         {/* 段落首行缩进：1个格子 (原为2个，左移一格) */}
-                         <div className="h-[38px]"></div>
-                         {paragraph.split('').map((char, i) => (
-                           <div key={i} className="h-[38px] flex items-center justify-center leading-none">
-                             {char}
-                           </div>
-                         ))}
-                       </div>
-                     ))}
-                   </div>
-                </div>
-             </div>
-           </section>
-        </div>
-          <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + socialPracticeOffset + 5).padStart(2, '0')}</div>
-        </div>
-      {/* ---------------- PAGE: RECOMMENDATION (Independent) ---------------- */}
-      {data.recommendationLetterImage && (
-        <div className={`a4-page ${style.pageClass}`}>
-          <PageBackground />
-          <div className={style.headerClass} style={style.headerStyle}>
-            <span className={style.titleClass}>推荐信</span>
-            <span className={style.subTitleClass}>Recommendation Letter</span>
+                ))}
+              </div>
+            )}
           </div>
-          <div className={style.contentPanelClass}>
-            <div className={`flex-1 ${style.imageContainerClass} bg-[var(--theme-card)] shadow-xl flex items-center justify-center overflow-hidden`}>
-               <img src={data.recommendationLetterImage} className="max-w-full max-h-full object-contain p-4" />
-            </div>
-            <div className="mt-8 p-6 bg-[var(--theme-secondary)] rounded-2xl border-l-4 border-[var(--theme-primary)] italic text-[var(--theme-readable-primary)]/70">
-              <p>“ 好的老师是孩子成长道路上的引路灯，这份推荐信承载着老师对孩子的期许与肯定。 ”</p>
-            </div>
-          </div>
-          <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + socialPracticeOffset + 6).padStart(2, '0')}</div>
-        </div>
-      )}
 
-      {/* ---------------- BACK COVER ---------------- */}
-      <div className={`a4-page ${style.pageClass} flex flex-col items-center`}>
-        <div className="absolute inset-0 overflow-hidden z-0">
-          <img 
-            src={data.cover.backgroundImage} 
-            className="absolute inset-0 w-full h-full object-cover opacity-90" 
-          />
-          <div className="absolute inset-0 bg-black/20 z-10"></div>
+          <div className="pt-6 border-t border-[var(--theme-primary)] border-opacity-10 flex items-center justify-center">
+             <p className="text-sm font-medium italic text-[var(--theme-readable-primary)] opacity-60">
+               “ 在实践中成长，在历练中成才 ”
+             </p>
+          </div>
         </div>
-        
-        <div className="relative z-20 h-full flex flex-col items-center justify-center p-20 text-center">
-            <div className="p-12 bg-white/75 backdrop-blur-md rounded-[3rem] border-2 border-[var(--theme-primary)]/20 shadow-2xl max-w-lg w-full flex flex-col items-center">
-               <div className="mb-10">
-                 <RenderAvatar 
-                   url={data.basicInfo.avatarUrl} 
-                   frameType={data.cover.avatarFrame} 
-                   shape={data.cover.avatarShape}
-                   size="w-40 h-40" 
-                 />
-               </div>
-               
-               <div className="mb-8">
-                 <Quote size={48} className="mx-auto text-[var(--theme-primary)] opacity-40 mb-6"/>
-                 <p className="text-2xl font-bold leading-relaxed text-[var(--theme-readable-primary)] italic">
-                   "{data.closingMessage || '成长每一步，都值得被记录'}"
-                 </p>
-               </div>
-               
-               <div className="w-24 h-1.5 bg-[var(--theme-primary)]/30 mx-auto rounded-full mb-8" />
-               
-               <div className="space-y-2">
-                 <div className="font-black text-3xl text-[var(--theme-readable-primary)] tracking-wider">{data.basicInfo.name}</div>
-                 <div className="text-[var(--theme-readable-primary)]/60 font-bold tracking-widest uppercase text-xs">{data.basicInfo.school}</div>
-               </div>
-            </div>
-        </div>
-        <div className="absolute bottom-4 right-8 text-xs text-white/60 z-30 font-bold tracking-widest">
-          {String(qualityPages.length + certPages.length + socialPracticeOffset + (data.recommendationLetterImage ? 7 : 6)).padStart(2, '0')}
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
+          {String(qualityPages.length + certPages.length + portfolioOffset + 4).padStart(2, '0')}
         </div>
       </div>
+    )}
+
+    {/* ---------------- PAGE: PERSONAL ESSAY (Independent) ---------------- */}
+    <div className={`a4-page ${style.pageClass}`}>
+      <PageBackground />
+      <WatermarkOverlay />
+      <StorybookDecoration />
+      <div className={style.headerClass} style={style.headerStyle}>
+        <span className={style.titleClass}>自荐信</span>
+        <span className={style.subTitleClass}>Personal Statement</span>
+     </div>
+     <div className={`${style.contentPanelClass} !mt-8 !mb-10 !p-0 overflow-hidden`}>
+         <section className="flex-none flex flex-col min-h-0">
+            <div className="relative bg-[var(--theme-card)] flex flex-col items-center"
+                style={{ height: '912px', width: '100%' }}> 
+              {/* 稿纸背景层 */}
+              <div className="absolute inset-0 pointer-events-none opacity-35">
+                <div className="h-full relative w-full">
+                  {/* 横线 (Horizontal lines) */}
+                  <div 
+                    className="absolute inset-0" 
+                    style={{ 
+                      backgroundImage: `linear-gradient(to bottom, var(--theme-readable-primary) 1px, transparent 1px)`,
+                      backgroundSize: '100% 38px',
+                      height: '912px'
+                    }}
+                  />
+                  {/* 竖线 (Vertical lines) */}
+                  <div className="absolute inset-0 grid grid-cols-[repeat(18,1fr)]" style={{ height: '912px', width: '100%' }}>
+                    {Array.from({ length: 18 }).map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={`h-full border-r border-[var(--theme-readable-primary)] ${i === 0 ? 'border-l' : ''}`}
+                      />
+                    ))}
+                  </div>
+                  {/* 底部封口线 (Bottom line) */}
+                  <div className="absolute top-[912px] left-0 right-0 border-b border-[var(--theme-readable-primary)]" />
+                </div>
+              </div>
+
+              {/* 文字层 - 保持 100% 确保与背景对齐 */}
+              <div className="relative z-10 text-[24px] leading-[38px] text-black h-full overflow-hidden w-full" 
+                   style={{ 
+                     fontFamily: '"Ma Shan Zheng", cursive',
+                     fontWeight: 400
+                   }}>
+                 <div className="grid grid-cols-[repeat(18,1fr)] h-[38px] mb-[38px] mt-[38px]">
+                   {Array.from({ length: 18 }).map((_, i) => (
+                     <div key={i} className="h-[38px] flex items-center justify-center font-bold">
+                       {i === 6 ? '自' : i === 8 ? '荐' : i === 10 ? '信' : ''}
+                     </div>
+                   ))}
+                 </div>
+                 <div className="flex flex-col text-left text-black">
+                   {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
+                     <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
+                       {/* 段落首行缩进：1个格子 (原为2个，左移一格) */}
+                       <div className="h-[38px]"></div>
+                       {paragraph.split('').map((char, i) => (
+                         <div key={i} className="h-[38px] flex items-center justify-center leading-none">
+                           {char}
+                         </div>
+                       ))}
+                     </div>
+                   ))}
+                 </div>
+              </div>
+           </div>
+         </section>
+      </div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 4).padStart(2, '0')}</div>
+      </div>
+    {/* ---------------- PAGE: RECOMMENDATION (Independent) ---------------- */}
+    {data.recommendationLetterImage && (
+      <div className={`a4-page ${style.pageClass}`}>
+        <PageBackground />
+        <WatermarkOverlay />
+        <StorybookDecoration />
+        <div className={style.headerClass} style={style.headerStyle}>
+          <span className={style.titleClass}>推荐信</span>
+          <span className={style.subTitleClass}>Recommendation Letter</span>
+        </div>
+        <div className={style.contentPanelClass}>
+          <div className={`flex-1 ${style.imageContainerClass} bg-[var(--theme-card)] shadow-xl flex items-center justify-center overflow-hidden`}>
+             <img src={data.recommendationLetterImage} className="max-w-full max-h-full object-contain p-4" />
+          </div>
+          <div className="mt-8 p-6 bg-[var(--theme-secondary)] rounded-2xl border-l-4 border-[var(--theme-primary)] italic text-[var(--theme-readable-primary)]/70">
+            <p>“ 好的老师是孩子成长道路上的引路灯，这份推荐信承载着老师对孩子的期许与肯定。 ”</p>
+          </div>
+        </div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 5).padStart(2, '0')}</div>
+      </div>
+    )}
+
+    {/* ---------------- BACK COVER ---------------- */}
+    <div className={`a4-page ${style.pageClass} flex flex-col items-center overflow-hidden`}>
+      <WatermarkOverlay />
+      
+      {layout === LayoutType.Modern ? (
+        // Modern Back Cover
+        <div className="relative w-full h-full flex flex-col items-center justify-center bg-[var(--theme-primary)]">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10">
+            <img src={data.cover.backgroundImage} className="w-full h-full object-cover grayscale" />
+          </div>
+          <div className="relative z-10 w-[80%] aspect-square border-8 border-white p-12 flex flex-col items-center justify-center text-white">
+             <div className="mb-10">
+                <RenderAvatar 
+                  url={data.basicInfo.avatarUrl} 
+                  frameType={data.cover.avatarFrame} 
+                  shape={data.cover.avatarShape}
+                  size="w-48 h-48"
+                />
+             </div>
+             <h2 className="text-4xl font-black italic mb-6 text-center">"{data.closingMessage || '成长每一步，都值得被记录'}"</h2>
+             <div className="h-2 w-24 bg-white mb-8"></div>
+             <div className="text-center">
+               <div className="text-5xl font-black tracking-tighter uppercase mb-2">{data.basicInfo.name}</div>
+               <div className="text-xl font-bold opacity-60 tracking-[0.3em] uppercase">{data.basicInfo.school}</div>
+             </div>
+          </div>
+        </div>
+      ) : layout === LayoutType.Storybook ? (
+        // Storybook Back Cover
+        <div className="relative w-full h-full flex flex-col items-center justify-center p-12 bg-[var(--theme-secondary)]/10 overflow-hidden">
+          <WatermarkOverlay />
+          <StorybookDecoration />
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/5 rounded-full -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[var(--theme-primary)]/5 rounded-full -ml-48 -mb-48"></div>
+          
+          <div className="relative z-10 flex flex-col items-center w-full max-w-lg bg-white/40 backdrop-blur-md p-12 rounded-[5rem] border-4 border-dashed border-[var(--theme-primary)]/20 shadow-xl">
+            <div className="mb-12 transform -rotate-3 bg-white p-4 rounded-3xl shadow-lg border-2 border-[var(--theme-primary)]/10">
+               <RenderAvatar 
+                 url={data.basicInfo.avatarUrl} 
+                 frameType={data.cover.avatarFrame} 
+                 shape={data.cover.avatarShape}
+                 size="w-48 h-48"
+               />
+            </div>
+            
+            <div className="mb-12 text-center relative">
+               <div className="absolute -top-6 -left-6 opacity-10">
+                 <Quote size={40} className="text-[var(--theme-primary)]" />
+               </div>
+               <p className="text-2xl font-black text-[var(--theme-readable-primary)] italic leading-relaxed">
+                 {data.closingMessage || '成长每一步，都值得被记录'}
+               </p>
+               <div className="absolute -bottom-6 -right-6 opacity-10 transform rotate-180">
+                 <Quote size={40} className="text-[var(--theme-primary)]" />
+               </div>
+            </div>
+            
+            <div className="h-1.5 w-32 bg-gradient-to-r from-transparent via-[var(--theme-primary)] to-transparent opacity-30 mb-10"></div>
+            
+            <div className="text-center space-y-3">
+               <h3 className="text-4xl font-black text-[var(--theme-readable-primary)] tracking-tighter">
+                 {data.basicInfo.name}
+               </h3>
+               <div className="text-sm font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] bg-[var(--theme-primary)]/10 px-4 py-1 rounded-full">
+                 {data.basicInfo.school}
+               </div>
+            </div>
+          </div>
+          
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-black opacity-20 uppercase tracking-[1em] whitespace-nowrap">
+             THE END • THANK YOU
+          </div>
+        </div>
+      ) : (
+        // Classic Back Cover (Original)
+        <>
+          <div className="absolute inset-0 overflow-hidden z-0">
+            <img 
+              src={data.cover.backgroundImage} 
+              className="absolute inset-0 w-full h-full object-cover opacity-90" 
+            />
+            <div className="absolute inset-0 bg-black/20 z-10"></div>
+          </div>
+          
+          <div className="relative z-20 h-full flex flex-col items-center justify-center p-20 text-center">
+              <div className="p-12 bg-white/75 backdrop-blur-md rounded-[3rem] border-2 border-[var(--theme-primary)]/20 shadow-2xl max-w-lg w-full flex flex-col items-center">
+                 <div className="mb-10">
+                   <RenderAvatar 
+                     url={data.basicInfo.avatarUrl} 
+                     frameType={data.cover.avatarFrame} 
+                     shape={data.cover.avatarShape}
+                     size="w-40 h-40" 
+                   />
+                 </div>
+                 
+                 <div className="mb-8">
+                   <Quote size={48} className="mx-auto text-[var(--theme-primary)] opacity-40 mb-6"/>
+                   <p className="text-2xl font-bold leading-relaxed text-[var(--theme-readable-primary)] italic">
+                     "{data.closingMessage || '成长每一步，都值得被记录'}"
+                   </p>
+                 </div>
+                 
+                 <div className="w-24 h-1.5 bg-[var(--theme-primary)]/30 mx-auto rounded-full mb-8" />
+                 
+                 <div className="space-y-2">
+                   <div className="font-black text-3xl text-[var(--theme-readable-primary)] tracking-wider">{data.basicInfo.name}</div>
+                   <div className="text-[var(--theme-readable-primary)]/60 font-bold tracking-widest uppercase text-xs">{data.basicInfo.school}</div>
+                 </div>
+              </div>
+          </div>
+        </>
+      )}
+      <div className="absolute bottom-4 right-8 text-xs text-white/60 z-30 font-bold tracking-widest">
+        {String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + (data.recommendationLetterImage ? 6 : 5)).padStart(2, '0')}
+      </div>
+    </div>
 
     </div>
   );

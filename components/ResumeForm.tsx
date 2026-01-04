@@ -83,7 +83,7 @@ const SectionHeader = ({ icon: Icon, title, description, isOpen, onToggle, onAiA
 );
 
 const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
-  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'certificates', 'hobbies', 'socialPractice', 'essays', 'closing']);
+  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'certificates', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
   const [isPolishing, setIsPolishing] = useState<Record<string, boolean>>({});
   
   const handlePolish = async (text: string, section: string, field: string, nestedField?: string) => {
@@ -116,7 +116,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
   };
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | null>(null);
+  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSection = (id: string) => {
@@ -135,7 +135,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
     });
   };
 
-  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice') => {
+  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio') => {
     setUploadType(type);
     fileInputRef.current?.click();
   };
@@ -202,6 +202,19 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           };
           const newImages = [...data.socialPractice.images, newItem];
           updateNested('socialPractice', 'images', newImages);
+        } else if (uploadType === 'portfolio') {
+          if (data.portfolio.images.length >= 8) {
+            alert('最多只能上传 8 张作品集照片');
+            setIsCompressing(false);
+            return;
+          }
+          const newItem = {
+            id: Date.now().toString(),
+            url: processed,
+            caption: '作品名称'
+          };
+          const newImages = [...data.portfolio.images, newItem];
+          updateNested('portfolio', 'images', newImages);
         }
         
         // 重置状态
@@ -1022,6 +1035,77 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 个人作品集 */}
+        <div className={`bg-[var(--theme-card)] rounded-[32px] transition-all duration-700 overflow-hidden border ${openSections.includes('portfolio') ? 'border-[var(--theme-primary)] shadow-2xl shadow-[var(--theme-primary)]/5 ring-4 ring-[var(--theme-primary)]/10' : 'border-[var(--theme-border)] shadow-sm'}`}>
+          <SectionHeader 
+            icon={Palette} 
+            title="个人作品集" 
+            description="Personal Portfolio"
+            isOpen={openSections.includes('portfolio')} 
+            onToggle={() => toggleSection('portfolio')}
+          />
+          {openSections.includes('portfolio') && (
+            <div className="p-8 space-y-8 animate-in slide-in-from-top-4 duration-500">
+              <div className="space-y-4">
+                <div className="flex flex-col ml-1">
+                  <label className="text-[10px] font-black text-[var(--theme-readable-primary)] opacity-60 uppercase tracking-[0.2em]">个人网站/主页</label>
+                  <span className="text-[9px] text-[var(--theme-readable-primary)] opacity-30 font-bold uppercase">Personal Website</span>
+                </div>
+                <input 
+                  value={data.portfolio.website} 
+                  onChange={e => updateNested('portfolio', 'website', e.target.value)} 
+                  placeholder="https://your-portfolio.com"
+                  className="w-full p-5 bg-[var(--theme-input)] border border-[var(--theme-border)] rounded-[32px] text-sm font-bold outline-none focus:ring-4 focus:ring-[var(--theme-primary)]/10 focus:border-[var(--theme-primary)] transition-all text-[var(--theme-readable-primary)]"
+                />
+              </div>
+
+              <div className="space-y-6 pt-6 border-t border-[var(--theme-border)]">
+                <div className="flex items-center justify-between ml-1">
+                  <div className="flex flex-col">
+                    <label className="text-[10px] font-black text-[var(--theme-readable-primary)] opacity-60 uppercase tracking-[0.2em]">作品展示</label>
+                    <span className="text-[9px] text-[var(--theme-readable-primary)] opacity-30 font-bold uppercase">Portfolio Images</span>
+                  </div>
+                  <button 
+                    onClick={() => triggerUpload('portfolio')}
+                    className="flex items-center gap-2.5 px-6 py-3.5 bg-[var(--theme-primary)] text-white rounded-[32px] text-[13px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[var(--theme-primary)]/20"
+                  >
+                    <Plus size={18} />
+                    添加作品
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {data.portfolio.images.map((img, index) => (
+                    <div key={img.id} className="relative group rounded-[32px] overflow-hidden border border-[var(--theme-border)] bg-[var(--theme-surface)] aspect-square flex flex-col shadow-sm hover:shadow-xl transition-all duration-700">
+                      <img src={img.url} className="w-full h-full object-cover flex-1 transition-transform duration-700 group-hover:scale-110" alt={img.caption} />
+                      <div className="absolute inset-x-0 bottom-0 p-5 bg-black/60 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                        <input 
+                          value={img.caption} 
+                          onChange={e => {
+                            const newImages = [...data.portfolio.images];
+                            newImages[index].caption = e.target.value;
+                            updateNested('portfolio', 'images', newImages);
+                          }}
+                          className="w-full bg-transparent text-white text-[10px] font-black outline-none border-b border-white/20 pb-2 focus:border-[var(--theme-primary)] transition-colors uppercase tracking-widest"
+                          placeholder="作品名称..."
+                        />
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const newImages = data.portfolio.images.filter(i => i.id !== img.id);
+                          updateNested('portfolio', 'images', newImages);
+                        }}
+                        className="absolute top-3 right-3 w-12 h-12 flex items-center justify-center text-red-400 hover:text-white hover:bg-red-500 rounded-[24px] transition-all bg-red-500/20 opacity-0 group-hover:opacity-100 shadow-sm hover:shadow-md active:scale-95 shrink-0"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

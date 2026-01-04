@@ -1,11 +1,305 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ResumeData, INITIAL_RESUME_DATA, ImageItem } from './types';
+import { ResumeData, INITIAL_RESUME_DATA, ImageItem, LayoutType } from './types';
+import { verificationService } from './services/verificationService';
 import ResumeForm from './components/ResumeForm';
 import ResumePreview from './components/ResumePreview';
 import ThemeSelector from './components/ThemeSelector';
-import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns } from 'lucide-react';
+import LayoutSelector from './components/LayoutSelector';
+import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket } from 'lucide-react';
 
 const STORAGE_KEY = 'smart-resume-kid-data-v1';
+
+// Payment Modal Component
+const PaymentModal = ({ 
+  data, 
+  onClose, 
+  onPrint 
+}: { 
+  data: ResumeData; 
+  onClose: () => void; 
+  onPrint: (pro: boolean) => void;
+}) => {
+  const [step, setStep] = useState<'options' | 'pay' | 'code' | 'manual'>('options');
+  const [inputCode, setInputCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+
+  const handleVerifyCode = async () => {
+    if (inputCode.length !== 8) {
+      setCodeError('请输入8位数字验证码');
+      return;
+    }
+    
+    setIsValidating(true);
+    const result = await verificationService.verifyCode(inputCode);
+    
+    if (result.success) {
+      onPrint(true);
+      onClose();
+    } else {
+      setCodeError(result.message || '验证码无效');
+    }
+    setIsValidating(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 no-print">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
+      <div className={`relative w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl transition-all duration-500 animate-in fade-in zoom-in slide-in-from-bottom-10 ${data.darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-dark'}`}>
+        <button 
+          onClick={onClose}
+          className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors z-10"
+        >
+          <X size={20} />
+        </button>
+
+        <div className="p-8 md:p-10">
+          {step === 'options' && (
+            <>
+              <div className="text-center mb-10">
+                <div className="w-20 h-20 bg-accent/10 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-accent">
+                  <Download size={40} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-3xl font-black tracking-tight mb-2">选择服务方式</h3>
+                <p className="opacity-60 font-medium text-sm">成长记录，值得更好的呈现</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Free Option */}
+                <div 
+                  onClick={() => onPrint(false)}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-surface border-black/5 hover:border-black/10'}`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-white/10 rounded-2xl">
+                      <FileText size={24} className="opacity-60" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold">免费预览版</h4>
+                      <p className="text-[10px] opacity-50">适合快速查看效果</p>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-black">¥0</span>
+                  </div>
+                  <ul className="space-y-2 text-[11px] font-bold opacity-60">
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} className="text-emerald-500" /> 包含全部内容</li>
+                    <li className="flex items-center gap-2"><X size={12} className="text-red-500" /> 包含预览版水印</li>
+                  </ul>
+                </div>
+
+                {/* Pro Option */}
+                <div 
+                  onClick={() => setStep('pay')}
+                  className={`group p-6 rounded-[32px] border-2 border-accent transition-all cursor-pointer hover:scale-[1.02] active:scale-95 bg-accent/5`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-accent/20 rounded-2xl text-accent">
+                      <Star size={24} fill="currentColor" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-accent">高清正式版</h4>
+                      <p className="text-[10px] text-accent/60 font-bold">推荐用于正式提交</p>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-black text-accent">¥39.9</span>
+                  </div>
+                  <ul className="space-y-2 text-[11px] font-bold text-accent/80">
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 彻底移除所有水印</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 印刷级超清画质</li>
+                  </ul>
+                </div>
+
+                {/* Code Redeem Option */}
+                <div 
+                  onClick={() => setStep('code')}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-blue-500/5 border-blue-500/10 hover:border-blue-500/20'}`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+                      <Ticket size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-blue-500">验证码兑换</h4>
+                      <p className="text-[10px] text-blue-500/60 font-bold">使用 8 位码免费兑换</p>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-black text-blue-500">兑换</span>
+                  </div>
+                  <ul className="space-y-2 text-[11px] font-bold text-blue-500/80">
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 输入兑换码直接下载</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 同样享受高清无水印</li>
+                  </ul>
+                </div>
+
+                {/* Manual Service Option */}
+                <div 
+                  onClick={() => setStep('manual')}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/20'}`}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500">
+                      <UserPlus size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-emerald-500">人工代做</h4>
+                      <p className="text-[10px] text-emerald-500/60 font-bold">专业 1对1 深度优化</p>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-black text-emerald-500">¥128</span>
+                  </div>
+                  <ul className="space-y-2 text-[11px] font-bold text-emerald-500/80">
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 设计师专业排版文案</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 满意为止，省时省力</li>
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
+
+          {step === 'pay' && (
+            <div className="text-center animate-in fade-in slide-in-from-right-10">
+              <button onClick={() => setStep('options')} className="absolute left-10 top-10 text-xs font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1">
+                ← 返回选择
+              </button>
+              <h3 className="text-2xl font-black mb-2">扫码获取正式版</h3>
+              <p className="text-sm opacity-60 mb-8">请扫码支付 ¥39.9，支付后联系微信领码</p>
+              
+              <div className="bg-white p-4 rounded-[32px] shadow-xl border-2 border-accent/10 mb-6 inline-block">
+                <img 
+                  src="/pay-qr.png" 
+                  className="w-48 h-48 object-contain" 
+                  alt="收款码"
+                  onError={(e) => e.currentTarget.src = "https://placehold.co/200x200?text=QR+Code+Pending"}
+                />
+              </div>
+
+              <div className="space-y-4 max-w-xs mx-auto">
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-2 px-6 py-2 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-black border border-emerald-500/20">
+                    <QrCode size={14} /> 仅支持微信支付
+                  </div>
+                </div>
+                
+                <div className="p-6 bg-emerald-50 rounded-[24px] border border-emerald-100 text-left">
+                  <p className="text-[12px] text-emerald-800 font-bold mb-4 leading-relaxed">
+                    ✨ <span className="text-emerald-600 underline decoration-2 underline-offset-4">支付流程：</span><br/>
+                    1. 截图并识别上方二维码支付<br/>
+                    2. 添加微信：<span className="text-lg font-black mx-1">18685442407</span><br/>
+                    3. 发送支付截图，领取 8 位验证码
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText('18685442407');
+                        alert('微信号已复制到剪贴板！');
+                      }}
+                      className="py-3 bg-white text-emerald-600 border border-emerald-200 text-xs font-black rounded-xl hover:bg-emerald-100 transition-colors"
+                    >
+                      复制微信号
+                    </button>
+                    <button 
+                      onClick={() => setStep('code')}
+                      className="py-3 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-1"
+                    >
+                      去输入验证码 <Ticket size={12} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 'code' && (
+            <div className="text-center animate-in fade-in slide-in-from-right-10 py-4">
+              <button onClick={() => setStep('options')} className="absolute left-10 top-10 text-xs font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1">
+                ← 返回选择
+              </button>
+              <h3 className="text-2xl font-black mb-2">验证码兑换</h3>
+              <p className="text-sm opacity-60 mb-8">输入 8 位数字验证码即可免费下载正式版</p>
+              
+              <div className="max-w-xs mx-auto space-y-4">
+                <input 
+                  type="text"
+                  maxLength={8}
+                  placeholder="请输入 8 位数字验证码"
+                  value={inputCode}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    setInputCode(val);
+                    setCodeError('');
+                  }}
+                  className={`w-full py-4 px-6 rounded-2xl text-center text-2xl font-black tracking-[0.2em] border-2 transition-all outline-none ${codeError ? 'border-red-500 bg-red-500/5' : 'border-[var(--theme-primary)]/20 focus:border-[var(--theme-primary)]'}`}
+                />
+                {codeError && <p className="text-red-500 text-xs font-bold">{codeError}</p>}
+                
+                <button 
+                  onClick={handleVerifyCode}
+                  disabled={isValidating || inputCode.length !== 8}
+                  className="w-full py-4 bg-dark text-white font-black rounded-2xl shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isValidating ? <Loader2 className="animate-spin" size={20} /> : '立即兑换'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'manual' && (
+            <div className="text-center animate-in fade-in slide-in-from-right-10">
+              <button onClick={() => setStep('options')} className="absolute left-10 top-10 text-xs font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1">
+                ← 返回选择
+              </button>
+              <div className="w-20 h-20 bg-emerald-500/10 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-emerald-500">
+                <UserPlus size={40} strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black mb-2">私人高级定制服务</h3>
+              <p className="text-sm opacity-60 mb-8">专业设计师 1对1 深度优化，助您在众多简历中脱颖而出</p>
+              
+              <div className={`p-8 rounded-[32px] border-2 border-emerald-500/20 mb-8 text-left ${data.darkMode ? 'bg-white/5' : 'bg-emerald-500/5'}`}>
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-emerald-500 font-black px-4 py-1 bg-emerald-500/10 rounded-full text-xs">尊享版服务</span>
+                  <span className="text-2xl font-black text-emerald-500">¥128.00</span>
+                </div>
+                <ul className="space-y-3 text-xs font-bold opacity-80">
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 专业排版设计，风格完美适配申请学校</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 文案深度润色，挖掘亮点，提升吸引力</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 包含 3 次深度修改，满意为止</li>
+                </ul>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-6 bg-white rounded-2xl border-2 border-emerald-500/10 shadow-sm flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white">
+                      <QrCode size={24} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] text-dark/40 font-bold uppercase">联系微信</p>
+                      <p className="text-lg font-black text-dark">18685442407</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText('18685442407');
+                      alert('微信已复制到剪贴板！');
+                    }}
+                    className="px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-colors"
+                  >
+                    复制微信
+                  </button>
+                </div>
+                <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest">添加时请备注：简历定制</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Migration helper to ensure old data works with new types
 const migrateData = (data: any): ResumeData => {
@@ -18,6 +312,7 @@ const migrateData = (data: any): ResumeData => {
     basicInfo: { ...INITIAL_RESUME_DATA.basicInfo, ...(data?.basicInfo || {}) },
     contact: { ...INITIAL_RESUME_DATA.contact, ...(data?.contact || {}) },
     hobbies: { ...INITIAL_RESUME_DATA.hobbies, ...(data?.hobbies || {}) },
+    portfolio: { ...INITIAL_RESUME_DATA.portfolio, ...(data?.portfolio || {}) },
   };
   
   // Ensure basic arrays exist
@@ -55,6 +350,16 @@ const migrateData = (data: any): ResumeData => {
   newData.hobbies.images = newData.hobbies.images.map((item: any, index: number) => {
     if (typeof item === 'string') {
       return { id: `migrated-hobby-${index}`, url: item, caption: '' };
+    }
+    return item;
+  });
+
+  // Migrate Portfolio Images
+  if (!newData.portfolio) newData.portfolio = { ...INITIAL_RESUME_DATA.portfolio };
+  if (!Array.isArray(newData.portfolio.images)) newData.portfolio.images = [];
+  newData.portfolio.images = newData.portfolio.images.map((item: any, index: number) => {
+    if (typeof item === 'string') {
+      return { id: `migrated-portfolio-${index}`, url: item, caption: '' };
     }
     return item;
   });
@@ -97,6 +402,9 @@ function App() {
   const [saveError, setSaveError] = useState(false); 
   const [isExporting, setIsExporting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [showWatermark, setShowWatermark] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -195,14 +503,15 @@ function App() {
     };
   }, [isResizing]);
 
-  const handlePrint = () => {
+  const handlePrint = (withWatermark: boolean = true) => {
     const originalTitle = document.title;
-    const fileName = `小升初简历-${data.basicInfo.name || '未命名'}`;
+    const fileName = `小升初简历-${data.basicInfo.name || '未命名'}${withWatermark ? '-水印预览版' : '-高清正式版'}`;
     document.title = fileName;
     
     // 进入导出模式
     setIsExporting(true);
     setIsPrinting(true);
+    setShowWatermark(withWatermark);
     
     // 如果当前是网格模式，先临时切换回单列模式
     const currentMode = layoutMode;
@@ -213,7 +522,7 @@ function App() {
     // Create a temporary toast to guide user
     const toast = document.createElement('div');
     toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl z-[9999] font-bold no-print animate-bounce';
-    toast.innerHTML = '🚀 正在为您生成高清 PDF，请稍等...';
+    toast.innerHTML = withWatermark ? '🚀 正在为您生成【水印预览版】PDF...' : '✨ 正在为您生成【高清无水印版】PDF...';
     document.body.appendChild(toast);
     
     // 延迟更长时间确保渲染完成，特别是图片和布局切换
@@ -226,6 +535,7 @@ function App() {
         document.title = originalTitle;
         setIsPrinting(false);
         setIsExporting(false);
+        setShowWatermark(true); // 打印完恢复编辑状态下的水印（如果不是Pro）
         if (currentMode === 'grid') {
           setLayoutMode('grid');
         }
@@ -284,6 +594,11 @@ function App() {
           darkMode={data.darkMode || false}
           onThemeChange={(t, c) => setData({ ...data, theme: t, themeColor: c })} 
           onDarkModeToggle={(isDark) => setData({ ...data, darkMode: isDark })}
+        />
+        <LayoutSelector 
+          currentLayout={data.layout || LayoutType.Classic}
+          onLayoutChange={(l) => setData({ ...data, layout: l })}
+          darkMode={data.darkMode || false}
         />
         <ResumeForm data={data} onChange={setData} />
       </div>
@@ -360,7 +675,7 @@ function App() {
             </div>
 
             <button 
-              onClick={handlePrint}
+              onClick={() => setShowPaymentModal(true)}
               disabled={isExporting}
               className={`flex items-center gap-3 px-8 py-4 rounded-3xl font-extrabold transition-all duration-300 shadow-2xl active:scale-95 disabled:opacity-50 group ${data.darkMode ? 'bg-accent text-dark hover:bg-accent/90 shadow-accent/10' : 'bg-dark text-white hover:bg-dark/90 shadow-dark/10'}`}
             >
@@ -389,11 +704,26 @@ function App() {
                 ...(isPrinting ? { transform: 'none' } : {})
               }}
            >
-              <ResumePreview data={data} scale={isPrinting ? 1 : scale} layoutMode={isPrinting ? 'single' : layoutMode} isPrinting={isPrinting} />
+              <ResumePreview 
+                data={data} 
+                scale={isPrinting ? 1 : scale} 
+                layoutMode={isPrinting ? 'single' : layoutMode} 
+                isPrinting={isPrinting}
+                showWatermark={isPro ? false : showWatermark} 
+              />
            </div>
         </div>
 
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <PaymentModal 
+          data={data}
+          onClose={() => setShowPaymentModal(false)}
+          onPrint={(pro) => handlePrint(!pro)}
+        />
+      )}
     </div>
   );
 }
