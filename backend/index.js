@@ -56,44 +56,31 @@ app.post('/api/verify', async (req, res) => {
   }
 
   try {
-    // 优先尝试数据库
-    try {
-      const result = await pool.query(
-        'SELECT * FROM verification_codes WHERE code = $1',
-        [code]
-      );
+    const result = await pool.query(
+      'SELECT * FROM verification_codes WHERE code = $1',
+      [code]
+    );
 
-      if (result.rows.length > 0) {
-        const codeData = result.rows[0];
-        if (codeData.is_used) {
-          return res.status(400).json({ success: false, message: '该验证码已被使用' });
-        }
-        await pool.query(
-          'UPDATE verification_codes SET is_used = true, used_at = NOW() WHERE code = $1',
-          [code]
-        );
-        return res.json({ success: true });
-      }
-    } catch (dbErr) {
-      console.log('Database not available, falling back to local codes.json');
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '验证码不存在' });
     }
 
-    // 兜底方案：读取本地 codes.json (适用于未配置数据库的情况)
-    const fs = require('fs');
-    const path = require('path');
-    const codesPath = path.join(__dirname, '..', 'public', 'codes.json');
-    
-    if (fs.existsSync(codesPath)) {
-      const codesData = JSON.parse(fs.readFileSync(codesPath, 'utf8'));
-      if (codesData.includes(code)) {
-        return res.json({ success: true, note: 'validated via local fallback' });
-      }
+    const codeData = result.rows[0];
+
+    if (codeData.is_used) {
+      return res.status(400).json({ success: false, message: '该验证码已被使用' });
     }
 
-    res.status(404).json({ success: false, message: '验证码不存在' });
+    // Mark as used
+    await pool.query(
+      'UPDATE verification_codes SET is_used = true, used_at = NOW() WHERE code = $1',
+      [code]
+    );
+
+    res.json({ success: true });
   } catch (err) {
     console.error('Verify error:', err);
-    res.status(500).json({ success: false, message: '验证校验服务异常' });
+    res.status(500).json({ success: false, message: '服务器内部错误' });
   }
 });
 
@@ -215,7 +202,7 @@ app.post('/api/ai/polish', async (req, res) => {
           'Authorization': `Bearer ${VOLC_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        timeout: 30000 // Add timeout
+        timeout: 60000 // 增加到 60 秒
       }
     );
 
