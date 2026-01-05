@@ -186,7 +186,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         {/* Playful shapes */}
         <div className="absolute top-[8%] left-[4%] w-16 h-16 rounded-full border-4 border-[var(--theme-primary)] rotate-12 animate-pulse"></div>
         <div className="absolute top-[18%] right-[6%] w-12 h-12 bg-[var(--theme-primary)] rounded-2xl rotate-[30deg] opacity-60"></div>
-        <div className="absolute top-[45%] left-[-2%] w-24 h-24 bg-[var(--theme-secondary)] rounded-full blur-2xl"></div>
+        <div className="absolute top-[45%] left-[-2%] w-24 h-24 bg-accent/20 rounded-full blur-2xl"></div>
         <div className="absolute top-[65%] right-[-3%] w-32 h-32 bg-[var(--theme-primary)] opacity-10 rounded-full blur-3xl"></div>
         
         <div className="absolute bottom-[12%] left-[8%] transform -rotate-12">

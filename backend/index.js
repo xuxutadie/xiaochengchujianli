@@ -180,6 +180,7 @@ app.post('/api/ai/polish', async (req, res) => {
   }
 
   try {
+    console.log('[AI Polish] Sending request to Volcengine...');
     const response = await axios.post(
       'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
       {
@@ -202,15 +203,18 @@ app.post('/api/ai/polish', async (req, res) => {
         headers: {
           'Authorization': `Bearer ${VOLC_API_KEY}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 30000 // Add timeout
       }
     );
 
+    console.log('[AI Polish] Response received from Volcengine');
     const polishedText = response.data.choices[0].message.content.trim();
     res.json({ success: true, text: polishedText });
   } catch (err) {
     console.error('Volcengine AI Polish error:', err.response?.data || err.message);
-    res.status(500).json({ success: false, message: 'AI 编辑失败，请稍后重试' });
+    const errorMsg = err.response?.data?.error?.message || err.message;
+    res.status(500).json({ success: false, message: `AI 编辑失败: ${errorMsg}` });
   }
 });
 

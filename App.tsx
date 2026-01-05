@@ -379,6 +379,32 @@ const migrateData = (data: any): ResumeData => {
     newData.backCover = { backgroundImage: '' };
   }
 
+  // Force migrate blue-ish colors to the new green
+  const blueColors = [
+    '#2563eb', '#3b82f6', '#1d4ed8', '#6366f1', '#4f46e5', '#0ea5e9', '#0284c7', '#06b6d4', '#0891b2', '#1890ff', '#1677ff',
+    '#0000ff', '#000080', '#00008b', '#0000cd', '#0000ee', '#1e90ff', '#4169e1', '#4682b4', '#5f9ea0', '#6495ed', '#7b68ee'
+  ];
+  if (newData.themeColor && (
+    blueColors.includes(newData.themeColor.toLowerCase()) || 
+    // 也检查一下是否为蓝色调 (B > R && B > G)
+    (newData.themeColor.startsWith('#') && newData.themeColor.length === 7 && 
+     parseInt(newData.themeColor.slice(5, 7), 16) > parseInt(newData.themeColor.slice(1, 3), 16) + 30 &&
+     parseInt(newData.themeColor.slice(5, 7), 16) > parseInt(newData.themeColor.slice(3, 5), 16) + 30)
+  )) {
+    newData.themeColor = '#D9F217';
+    newData.theme = ThemeType.GreenGradient; // 同时强制切换到绿色渐变主题
+  }
+  
+  // Force migrate old blue theme IDs
+  const blueThemes = [
+    'NatureOcean', 'CyberBlue', 'ProfessionalBlue', 'DopamineBlue', 'MacaronBlue', 'ChineseBlue',
+    'NatureLake', 'NatureForest' // 之前这些可能是蓝色调的，现在统一检查
+  ];
+  if (newData.theme && blueThemes.includes(newData.theme)) {
+    newData.theme = ThemeType.GreenGradient;
+    newData.themeColor = '#D9F217';
+  }
+
   return newData;
 };
 
