@@ -470,6 +470,24 @@ function App() {
 
   // 2. Save to LocalStorage on Change
   useEffect(() => {
+    const checkBackend = async () => {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      console.log('🔍 正在检测后端连接...', backendUrl);
+      try {
+        const res = await fetch(`${backendUrl}/api/health`);
+        if (res.ok) {
+          console.log('✅ 后端连接成功！健康状态：OK');
+        } else {
+          console.error('❌ 后端返回异常状态码:', res.status);
+        }
+      } catch (err) {
+        console.error('❌ 无法连接到后端，请检查 VITE_BACKEND_URL 配置。错误详情:', err.message);
+      }
+    };
+    checkBackend();
+  }, []);
+
+  useEffect(() => {
     if (isLoaded) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
