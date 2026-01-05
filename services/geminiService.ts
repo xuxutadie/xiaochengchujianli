@@ -3,7 +3,8 @@ import { ResumeData } from "../types";
 
 // Initialize the Gemini client using the environment variable
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '') || '';
-const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+
 const genAI = (apiKey && apiKey !== 'PLACEHOLDER_API_KEY') ? new GoogleGenAI({ apiKey }) : null;
 
 export const polishContent = async (text: string, section: string, instruction?: string): Promise<string> => {
@@ -24,45 +25,33 @@ export const polishContent = async (text: string, section: string, instruction?:
         if (data.success) return data.text;
         console.warn("Backend AI polish returned error:", data.message);
       } else {
-        console.warn("Backend AI polish request failed with status:", response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.warn("Backend AI polish request failed:", response.status, errorData.message || '');
       }
     } catch (error) {
-      console.error("Backend AI polish failed, falling back to client-side:", error);
+      console.error("Backend AI polish connection failed:", error);
     }
   }
 
   // Fallback to client-side Gemini if backend fails or not configured
-  if (!genAI || !apiKey || apiKey === 'PLACEHOLDER_API_KEY') {
-    console.warn("No valid AI configuration found (Backend URL or Gemini API Key)");
-    return text;
+  if (genAI && apiKey && apiKey !== 'PLACEHOLDER_API_KEY') {
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = instruction 
+        ? `角色: 资深教育专家。任务: 根据指令 "${instruction}" 修改 "${section}" 内容。当前内容: "${text}"。仅返回处理后的文本。`
+        : `角色: 资深教育专家。任务: 润色 "${section}" 内容。原文: "${text}"。仅返回处理后的文本。`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text().trim() || text;
+    } catch (error) {
+      console.error("Client-side AI polish failed:", error);
+      return text;
+    }
   }
 
-  const prompt = instruction 
-    ? `
-    角色: 你是一位资深的小升初教育专家和文案大师。
-    任务: 根据用户指令编辑学生简历中 "${section}" 部分的内容。
-    用户指令: "${instruction}"
-    当前内容: "${text}"
-    目标: 严格执行用户指令，语言要专业、自信、真诚，同时符合12岁学生的口吻。
-    限制: 仅返回编辑后的文本，不要包含任何解释或引导语。语言为简体中文。
-    `
-    : `
-    角色: 你是一位资深的小升初教育专家和文案大师。
-    任务: 润色学生简历中 "${section}" 部分的内容。
-    目标: 语言要专业、自信、真诚，同时符合12岁学生的口吻。突出亮点，优化表达。
-    限制: 仅返回润色后的文本，不要包含任何解释或引导语。语言为简体中文。
-    原文: "${text}"
-    `;
-
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text().trim() || text;
-  } catch (error) {
-    console.error("Polish content failed:", error);
-    return text;
-  }
+  console.warn("AI Service Unavailable: Neither Backend URL nor Gemini API Key is valid.");
+  return text;
 };
 
 export const generateIllustration = async (description: string, styleContext: string): Promise<string | null> => {

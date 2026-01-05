@@ -137,9 +137,9 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
     setAiEditConfig({
       isOpen: true,
       text: context,
-      section: '自荐信',
+      section: '封底寄语',
       field: 'closingMessage',
-      instruction: '请为我生成一封完整的小升初自荐信，字数在350字左右，包含抬头、正文（分三段）和落款。'
+      instruction: '请为我生成一段简洁感人的封底寄语，字数控制在30字以内。'
     });
   };
   const [isUploading, setIsUploading] = useState<string | null>(null);

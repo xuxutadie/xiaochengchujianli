@@ -135,8 +135,6 @@ app.post('/api/ai/polish', async (req, res) => {
   
   const isClosingSection = section && (
      section.includes('自荐信') || 
-     section.includes('结语') || 
-     section.includes('寄语') ||
      section.includes('自我推荐') ||
      section === 'closing'
    );

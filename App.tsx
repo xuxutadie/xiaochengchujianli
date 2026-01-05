@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ResumeData, INITIAL_RESUME_DATA, ImageItem, LayoutType } from './types';
+import { ResumeData, INITIAL_RESUME_DATA, ImageItem, LayoutType, ThemeType } from './types';
 import { verificationService } from './services/verificationService';
 import ResumeForm from './components/ResumeForm';
 import ResumePreview from './components/ResumePreview';
