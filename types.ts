@@ -2,7 +2,7 @@ export enum ThemeType {
   // 多巴胺系列 (高饱和度、明亮渐变)
   DopaminePink = 'dopamine-pink',
   DopamineYellow = 'dopamine-yellow',
-  DopamineBlue = 'dopamine-blue',
+  DopamineGreen = 'dopamine-green',
   DopaminePurple = 'dopamine-purple',
   DopamineOrange = 'dopamine-orange',
   
@@ -10,12 +10,12 @@ export enum ThemeType {
   MacaronMint = 'macaron-mint',
   MacaronPurple = 'macaron-purple',
   MacaronPeach = 'macaron-peach',
-  MacaronSky = 'macaron-sky',
+  MacaronGreen = 'macaron-green',
   MacaronCream = 'macaron-cream',
   
   // 中国风系列 (古典、稳重渐变)
   ChineseInk = 'chinese-ink',
-  ChineseCyan = 'chinese-cyan',
+  ChineseBamboo = 'chinese-bamboo',
   ChineseRed = 'chinese-red',
   ChineseGold = 'chinese-gold',
   ChineseJade = 'chinese-jade',
@@ -23,7 +23,7 @@ export enum ThemeType {
   // 欧美复古系列 (胶片感、怀旧渐变)
   RetroBrown = 'retro-brown',
   RetroGreen = 'retro-green',
-  RetroNavy = 'retro-navy',
+  RetroDeepGreen = 'retro-deep-green',
   RetroWine = 'retro-wine',
   RetroSlate = 'retro-slate',
 
@@ -35,11 +35,11 @@ export enum ThemeType {
   // 大自然系列 (生机、自然渐变)
   NatureForest = 'nature-forest',
   NatureSunset = 'nature-sunset',
-  NatureOcean = 'nature-ocean',
+  NatureLake = 'nature-lake',
   NatureDesert = 'nature-desert',
 
   // 默认保持一个基础渐变
-  OceanGradient = 'ocean-gradient'
+  GreenGradient = 'green-gradient'
 }
 
 export enum HobbyShape {
@@ -183,10 +183,10 @@ export interface ResumeData {
 
 // ⚠️ 这里填入默认值。
 export const INITIAL_RESUME_DATA: ResumeData = {
-  theme: ThemeType.OceanGradient,
+  theme: ThemeType.GreenGradient,
   layout: LayoutType.Classic,
-  themeColor: '#0ea5e9',
-  darkMode: false,
+  themeColor: '#D9F217',
+  darkMode: true,
   pageBackground: '',
   cover: {
     title: '我的简历',
@@ -228,14 +228,14 @@ export const INITIAL_RESUME_DATA: ResumeData = {
     { rowName: '六年级上', subjects: [{name: '语文', value: 'A'}, {name: '数学', value: 'A'}, {name: '英语', value: 'A'}, {name: '综合科目', value: 'A'}] },
   ],
   awards: [
-    { id: '1', name: '全国青少年信息学奥林匹克联赛一等奖', level: '国家级', date: '2023' },
-    { id: '2', name: '海淀区三好学生', level: '区级', date: '2022' },
-    { id: '3', name: '北京市中小学电脑制作活动一等奖', level: '市级', date: '2023' },
-    { id: '4', name: '“希望杯”全国数学邀请赛一等奖', level: '国家级', date: '2022' },
-    { id: '5', name: '学校“优秀少先队员”称号', level: '校级', date: '2023' },
-    { id: '6', name: '剑桥少儿英语三级优秀证书', level: '国际', date: '2021' },
-    { id: '7', name: '“春蕾杯”全国小学生作文大赛一等奖', level: '国家级', date: '2022' },
-    { id: '8', name: '学校运动会 100米跑第一名', level: '校级', date: '2023' },
+    { id: '1', name: '全国青少年信息学奥林匹克联赛一等奖', level: '国家级', date: '2023-09' },
+    { id: '2', name: '海淀区三好学生', level: '区级', date: '2022-06' },
+    { id: '3', name: '北京市中小学电脑制作活动一等奖', level: '市级', date: '2023-05' },
+    { id: '4', name: '“希望杯”全国数学邀请赛一等奖', level: '国家级', date: '2022-12' },
+    { id: '5', name: '学校“优秀少先队员”称号', level: '校级', date: '2023-03' },
+    { id: '6', name: '剑桥少儿英语三级优秀证书', level: '国际', date: '2021-11' },
+    { id: '7', name: '“春蕾杯”全国小学生作文大赛一等奖', level: '国家级', date: '2022-10' },
+    { id: '8', name: '学校运动会 100米跑第一名', level: '校级', date: '2023-04' },
   ],
   awardsQuote: '每一份荣誉都是汗水的结晶',
   certificates: [],

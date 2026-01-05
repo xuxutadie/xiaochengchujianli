@@ -31,7 +31,7 @@ const isLightColor = (color: string) => {
 const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single', isPrinting = false, showWatermark = false }, ref) => {
   
   const getThemeStyles = () => {
-    const baseColor = data.themeColor || '#2563eb';
+    const baseColor = data.themeColor || '#D9F217';
     const isBaseColorLight = isLightColor(baseColor);
     const layout = data.layout || LayoutType.Classic;
     
@@ -45,20 +45,20 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       // ... same as before ...
       [ThemeType.DopaminePink]: 'linear-gradient(135deg, #ff4d4f, #ff85c0)',
       [ThemeType.DopamineYellow]: 'linear-gradient(135deg, #fadb14, #ffe58f)',
-      [ThemeType.DopamineBlue]: 'linear-gradient(135deg, #1890ff, #69c0ff)',
+      [ThemeType.DopamineGreen]: 'linear-gradient(135deg, #D9F217, #7cb305)',
       [ThemeType.DopaminePurple]: 'linear-gradient(135deg, #722ed1, #b37feb)',
       [ThemeType.DopamineOrange]: 'linear-gradient(135deg, #fa8c16, #ffd666)',
       
       // 马卡龙系列
-      [ThemeType.MacaronMint]: 'linear-gradient(135deg, #b5f5ec, #87e8de)',
+      [ThemeType.MacaronMint]: 'linear-gradient(135deg, #D9F217, #fadb14)',
       [ThemeType.MacaronPurple]: 'linear-gradient(135deg, #efdbff, #d3adf7)',
       [ThemeType.MacaronPeach]: 'linear-gradient(135deg, #ffd8bf, #ffbb96)',
-      [ThemeType.MacaronSky]: 'linear-gradient(135deg, #bae7ff, #91d5ff)',
+      [ThemeType.MacaronGreen]: 'linear-gradient(135deg, #D9F217, #7cb305)',
       [ThemeType.MacaronCream]: 'linear-gradient(135deg, #fffbe6, #fff1b8)',
       
       // 中国风系列
       [ThemeType.ChineseInk]: 'linear-gradient(135deg, #262626, #595959)',
-      [ThemeType.ChineseCyan]: 'linear-gradient(135deg, #3e8e9e, #78b5c2)',
+      [ThemeType.ChineseBamboo]: 'linear-gradient(135deg, #D9F217, #7cb305)',
       [ThemeType.ChineseRed]: 'linear-gradient(135deg, #a8071a, #cf1322)',
       [ThemeType.ChineseGold]: 'linear-gradient(135deg, #874d00, #d4b106)',
       [ThemeType.ChineseJade]: 'linear-gradient(135deg, #237804, #73d13d)',
@@ -66,22 +66,22 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       // 欧美复古系列
       [ThemeType.RetroBrown]: 'linear-gradient(135deg, #873800, #ad4e00)',
       [ThemeType.RetroGreen]: 'linear-gradient(135deg, #00474f, #006d75)',
-      [ThemeType.RetroNavy]: 'linear-gradient(135deg, #002329, #003a44)',
+      [ThemeType.RetroDeepGreen]: 'linear-gradient(135deg, #262626, #135200)',
       [ThemeType.RetroWine]: 'linear-gradient(135deg, #5c0011, #a8071a)',
       [ThemeType.RetroSlate]: 'linear-gradient(135deg, #262626, #434343)',
-
+      
       // 赛博朋克系列
       [ThemeType.CyberNeon]: 'linear-gradient(135deg, #eb2f96, #722ed1)',
-      [ThemeType.CyberElectric]: 'linear-gradient(135deg, #13c2c2, #2f54eb)',
-      [ThemeType.CyberAcid]: 'linear-gradient(135deg, #7cb305, #13c2c2)',
-
+      [ThemeType.CyberElectric]: 'linear-gradient(135deg, #D9F217, #7cb305)',
+      [ThemeType.CyberAcid]: 'linear-gradient(135deg, #D9F217, #7cb305)',
+      
       // 大自然系列
       [ThemeType.NatureForest]: 'linear-gradient(135deg, #135200, #52c41a)',
       [ThemeType.NatureSunset]: 'linear-gradient(135deg, #d4380d, #faad14)',
-      [ThemeType.NatureOcean]: 'linear-gradient(135deg, #003a8c, #1890ff)',
-      [ThemeType.NatureDesert]: 'linear-gradient(135deg, #874d00, #13c2c2)',
+      [ThemeType.NatureLake]: 'linear-gradient(135deg, #D9F217, #7cb305)',
+      [ThemeType.NatureDesert]: 'linear-gradient(135deg, #874d00, #D9F217)',
 
-      [ThemeType.OceanGradient]: 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+      [ThemeType.GreenGradient]: 'linear-gradient(135deg, #D9F217, #7cb305)',
     };
 
     const isGradient = !!gradients[data.theme];

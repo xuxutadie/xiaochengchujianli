@@ -25,8 +25,8 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ currentLayout, onLayout
             <Layers size={22} strokeWidth={2.5} />
           </div>
           <div>
-            <span className={`font-black text-lg tracking-tight block ${darkMode ? 'text-white' : 'text-dark'}`}>智能排版 & 布局切换</span>
-            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white/30' : 'text-dark/30'}`}>Layout & Typography</span>
+            <span className={`font-black text-lg tracking-tight block text-[var(--theme-label)]`}>智能排版 & 布局切换</span>
+            <span className={`text-[10px] font-black uppercase tracking-[0.2em] text-[var(--theme-label)] opacity-30`}>Layout & Typography</span>
           </div>
         </div>
       </div>
@@ -43,7 +43,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ currentLayout, onLayout
               className={`group/item relative flex flex-col items-center p-6 rounded-[24px] border-2 transition-all duration-300 ${
                 isActive 
                   ? 'bg-accent border-accent text-dark shadow-lg shadow-accent/20 scale-[1.02]' 
-                  : `${darkMode ? 'bg-white/5 border-white/10 text-white hover:border-white/20' : 'bg-surface border-black/5 text-dark hover:border-black/10'}`
+                  : `${darkMode ? 'bg-white/5 border-white/10 text-[var(--theme-label)] hover:border-white/20' : 'bg-surface border-black/5 text-dark hover:border-black/10'}`
               }`}
             >
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${
@@ -51,8 +51,8 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ currentLayout, onLayout
               }`}>
                 <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className="font-bold text-sm mb-1">{layout.name}</span>
-              <span className={`text-[10px] opacity-60 font-medium ${isActive ? 'text-dark' : ''}`}>{layout.desc}</span>
+              <span className={`font-bold text-sm mb-1 ${isActive ? 'text-dark' : 'text-[var(--theme-label)]'}`}>{layout.name}</span>
+              <span className={`text-[10px] opacity-60 font-medium ${isActive ? 'text-dark' : 'text-[var(--theme-label)]'}`}>{layout.desc}</span>
               
               {isActive && (
                 <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-white animate-pulse"></div>

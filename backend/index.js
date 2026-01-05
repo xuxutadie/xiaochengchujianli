@@ -2,15 +2,21 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Volcengine (Ark)
+const VOLC_API_KEY = process.env.VOLC_API_KEY;
+const VOLC_ENDPOINT_ID = process.env.VOLC_ENDPOINT_ID;
+
+console.log('AI Configuration:', {
+  hasApiKey: !!VOLC_API_KEY,
+  hasEndpointId: !!VOLC_ENDPOINT_ID
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -102,35 +108,109 @@ app.post('/api/admin/add-codes', async (req, res) => {
 
 // AI Polish endpoint
 app.post('/api/ai/polish', async (req, res) => {
-  const { text, section } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({ success: false, message: 'AI 服务未配置 API Key' });
+  const { text, section, instruction } = req.body;
+  console.log(`[AI Edit] Request for section: "${section}", instruction: "${instruction || 'none'}", text length: ${text?.length}`);
+  
+  if (!VOLC_API_KEY || !VOLC_ENDPOINT_ID) {
+    return res.status(500).json({ success: false, message: '火山引擎 AI 服务未配置' });
   }
 
-  if (!text) {
-    return res.status(400).json({ success: false, message: '请输入需要润色的内容' });
+  if (!text && !instruction) {
+    return res.status(400).json({ success: false, message: '请输入需要处理的内容或指令' });
+  }
+
+  // 基础指令逻辑
+  let coreTask = `你的任务是根据用户提供的原内容，撰写或润色学生简历中的 "${section || '简历内容'}" 部分。`;
+  if (instruction) {
+    coreTask = `你的任务是严格根据用户的自定义指令 "${instruction}"，来修改或生成学生简历中的 "${section || '简历内容'}" 部分。`;
+  }
+
+  // 针对不同部分的字数控制逻辑
+  let lengthInstruction = '润色后的字数应控制在原文字数的 1.2 倍以内，避免冗长，确保精炼。';
+  if (instruction) {
+    lengthInstruction = '请根据用户的指令来控制字数，如果没有明确字数要求，则保持篇幅适中。';
+  }
+  
+  let structureInstruction = '仅返回处理后的文本内容，不要包含任何解释、引言或引号。';
+  
+  const isClosingSection = section && (
+     section.includes('自荐信') || 
+     section.includes('结语') || 
+     section.includes('寄语') ||
+     section.includes('自我推荐') ||
+     section === 'closing'
+   );
+
+  if (isClosingSection) {
+     console.log('[AI Polish] Applying long-form closing letter instruction');
+     lengthInstruction = '润色后的总字数必须严格达到 320 字以上，甚至可以接近 400 字，绝对不能低于 300 字。如果原文字数较少，请根据小升初自荐信的常见内容（如：对学校的向往、自己的学习态度、未来的展望）进行合理、丰富的扩充和润色，确保篇幅宏大、文采斐然。';
+     structureInstruction = `必须严格遵循以下排版格式，严禁合并段落：
+1. 第一行：顶格书写“尊敬的贵校老师：”。
+2. 第二行：空行。
+3. 第三段起：开始正文，正文必须分为三至四段。
+4. 正文每段之间必须空出一行（即使用两个换行符 \\n\\n 分隔）。
+5. 每一段正文的内容都必须非常充实，每段至少 100 字。
+6. 正文结束后，空出一行。
+7. 最后两行：另起两行书写落款（学生：XXX \\n 日期：XXXX年XX月XX日）。
+8. 仅返回润色后的正文，不要有任何其他文字。`;
+   }
+
+  // 构建 System Prompt
+  let systemContent = `你是一位资深的小升初教育专家和简历指导老师。
+你的任务是撰写或润色学生简历中的 "${section || '简历内容'}" 部分。
+
+请遵循以下核心原则：
+1. **真实性**：除非用户明确要求虚构或生成占位内容，否则必须基于原文本中的事实进行处理。
+2. **字数控制**：${lengthInstruction}
+3. **专业口吻**：语言要专业、自信、真诚，符合 12 岁学生申请名校的口吻。
+4. **亮点修辞**：将平凡的经历转化为具有竞争力的描述。
+5. **格式规范**：${structureInstruction}`;
+
+  if (instruction) {
+    systemContent = `你是一位资深的小升初教育专家和简历指导老师。
+用户现在提出了明确的编辑指令，你的首要任务是**完全满足用户的自定义指令**。
+
+当前操作的部分："${section || '简历内容'}"
+
+请遵循以下原则：
+1. **指令优先**：严格执行用户的自定义指令 "${instruction}"。
+2. **简历适配**：在满足指令的前提下，确保内容依然符合小升初简历的专业、诚恳的风格。
+3. **真实性**：除非指令要求生成新内容，否则基于原事实进行编辑。
+4. **格式规范**：${structureInstruction}`;
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `
-      角色: 你是一位资深的小升初教育专家和文案大师。
-      任务: 润色学生简历中 "${section || '简历内容'}" 部分的内容。
-      目标: 语言要专业、自信、真诚，同时符合12岁学生的口吻。突出亮点，优化表达。
-      限制: 仅返回润色后的文本，不要包含任何解释或引导语。语言为简体中文。
-      原文: "${text}"
-    `;
+    const response = await axios.post(
+      'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+      {
+        model: VOLC_ENDPOINT_ID,
+        messages: [
+          {
+            role: 'system',
+            content: systemContent
+          },
+          {
+            role: 'user',
+            content: instruction 
+              ? `用户指令: ${instruction}\n\n当前内容: ${text || '(无)'}`
+              : text
+          }
+        ],
+         temperature: 0.8
+       },
+      {
+        headers: {
+          'Authorization': `Bearer ${VOLC_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const polishedText = response.text().trim();
-    
+    const polishedText = response.data.choices[0].message.content.trim();
     res.json({ success: true, text: polishedText });
   } catch (err) {
-    console.error('AI Polish error:', err);
-    res.status(500).json({ success: false, message: 'AI 润色失败，请重试' });
+    console.error('Volcengine AI Polish error:', err.response?.data || err.message);
+    res.status(500).json({ success: false, message: 'AI 编辑失败，请稍后重试' });
   }
 });
 

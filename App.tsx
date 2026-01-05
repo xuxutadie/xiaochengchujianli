@@ -45,7 +45,7 @@ const PaymentModal = ({
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 no-print">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose}></div>
-      <div className={`relative w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl transition-all duration-500 animate-in fade-in zoom-in slide-in-from-bottom-10 ${data.darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-dark'}`}>
+      <div className={`relative w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl transition-all duration-500 animate-in fade-in zoom-in slide-in-from-bottom-10 ${data.darkMode ? 'bg-[#1c1c1e] text-[var(--theme-label)]' : 'bg-white text-dark'}`}>
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors z-10"
@@ -68,7 +68,7 @@ const PaymentModal = ({
                 {/* Free Option */}
                 <div 
                   onClick={() => onPrint(false)}
-                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-surface border-black/5 hover:border-black/10'}`}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20 text-[var(--theme-label)]' : 'bg-surface border-black/5 hover:border-black/10 text-dark'}`}
                 >
                   <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-white/10 rounded-2xl">
@@ -114,21 +114,21 @@ const PaymentModal = ({
                 {/* Code Redeem Option */}
                 <div 
                   onClick={() => setStep('code')}
-                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-blue-500/5 border-blue-500/10 hover:border-blue-500/20'}`}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-accent/5 border-accent/10 hover:border-accent/20'}`}
                 >
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+                    <div className="p-3 bg-accent/10 rounded-2xl text-accent">
                       <Ticket size={24} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-blue-500">验证码兑换</h4>
-                      <p className="text-[10px] text-blue-500/60 font-bold">使用 8 位码免费兑换</p>
+                      <h4 className="font-bold text-accent">验证码兑换</h4>
+                      <p className="text-[10px] text-accent/60 font-bold">使用 8 位码免费兑换</p>
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-2xl font-black text-blue-500">兑换</span>
+                    <span className="text-2xl font-black text-accent">兑换</span>
                   </div>
-                  <ul className="space-y-2 text-[11px] font-bold text-blue-500/80">
+                  <ul className="space-y-2 text-[11px] font-bold text-accent/80">
                     <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 输入兑换码直接下载</li>
                     <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 同样享受高清无水印</li>
                   </ul>
@@ -137,21 +137,21 @@ const PaymentModal = ({
                 {/* Manual Service Option */}
                 <div 
                   onClick={() => setStep('manual')}
-                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-white/20' : 'bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/20'}`}
+                  className={`group p-6 rounded-[32px] border-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${data.darkMode ? 'bg-white/5 border-white/10 hover:border-orange-500/20 text-[var(--theme-label)]' : 'bg-orange-500/5 border-orange-500/10 hover:border-orange-500/20 text-orange-500'}`}
                 >
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500">
+                    <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500">
                       <UserPlus size={24} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-emerald-500">人工代做</h4>
-                      <p className="text-[10px] text-emerald-500/60 font-bold">专业 1对1 深度优化</p>
+                      <h4 className="font-bold text-orange-500">私人定制</h4>
+                      <p className="text-[10px] text-orange-500/60 font-bold">专业 1对1 深度优化</p>
                     </div>
                   </div>
                   <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-2xl font-black text-emerald-500">¥128</span>
+                    <span className="text-2xl font-black text-orange-500">¥158</span>
                   </div>
-                  <ul className="space-y-2 text-[11px] font-bold text-emerald-500/80">
+                  <ul className="space-y-2 text-[11px] font-bold text-orange-500/80">
                     <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 设计师专业排版文案</li>
                     <li className="flex items-center gap-2"><CheckCircle2 size={12} /> 满意为止，省时省力</li>
                   </ul>
@@ -232,7 +232,7 @@ const PaymentModal = ({
                     setInputCode(val);
                     setCodeError('');
                   }}
-                  className={`w-full py-4 px-6 rounded-2xl text-center text-2xl font-black tracking-[0.2em] border-2 transition-all outline-none ${codeError ? 'border-red-500 bg-red-500/5' : 'border-[var(--theme-primary)]/20 focus:border-[var(--theme-primary)]'}`}
+                  className={`w-full py-4 px-6 rounded-2xl text-center text-2xl font-black tracking-[0.2em] border-2 transition-all outline-none bg-white/5 text-white ${codeError ? 'border-red-500 bg-red-500/5' : 'border-white/20 focus:border-white'}`}
                 />
                 {codeError && <p className="text-red-500 text-xs font-bold">{codeError}</p>}
                 
@@ -252,28 +252,28 @@ const PaymentModal = ({
               <button onClick={() => setStep('options')} className="absolute left-10 top-10 text-xs font-bold opacity-40 hover:opacity-100 transition-opacity flex items-center gap-1">
                 ← 返回选择
               </button>
-              <div className="w-20 h-20 bg-emerald-500/10 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-emerald-500">
+              <div className="w-20 h-20 bg-orange-500/10 rounded-[30px] flex items-center justify-center mx-auto mb-6 text-orange-500">
                 <UserPlus size={40} strokeWidth={2.5} />
               </div>
               <h3 className="text-2xl font-black mb-2">私人高级定制服务</h3>
               <p className="text-sm opacity-60 mb-8">专业设计师 1对1 深度优化，助您在众多简历中脱颖而出</p>
               
-              <div className={`p-8 rounded-[32px] border-2 border-emerald-500/20 mb-8 text-left ${data.darkMode ? 'bg-white/5' : 'bg-emerald-500/5'}`}>
+              <div className={`p-8 rounded-[32px] border-2 border-orange-500/20 mb-8 text-left ${data.darkMode ? 'bg-white/5' : 'bg-orange-500/5'}`}>
                 <div className="flex justify-between items-center mb-6">
-                  <span className="text-emerald-500 font-black px-4 py-1 bg-emerald-500/10 rounded-full text-xs">尊享版服务</span>
-                  <span className="text-2xl font-black text-emerald-500">¥128.00</span>
+                  <span className="text-orange-500 font-black px-4 py-1 bg-orange-500/10 rounded-full text-xs">尊享版服务</span>
+                  <span className="text-2xl font-black text-orange-500">¥158.00</span>
                 </div>
                 <ul className="space-y-3 text-xs font-bold opacity-80">
-                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 专业排版设计，风格完美适配申请学校</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 文案深度润色，挖掘亮点，提升吸引力</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> 包含 3 次深度修改，满意为止</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-orange-500" /> 专业排版设计，风格完美适配申请学校</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-orange-500" /> 文案深度润色，挖掘亮点，提升吸引力</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-orange-500" /> 包含 3 次深度修改，满意为止</li>
                 </ul>
               </div>
 
               <div className="space-y-4">
-                <div className="p-6 bg-white rounded-2xl border-2 border-emerald-500/10 shadow-sm flex items-center justify-between">
+                <div className="p-6 bg-white rounded-2xl border-2 border-orange-500/10 shadow-sm flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white">
+                    <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white">
                       <QrCode size={24} />
                     </div>
                     <div className="text-left">
@@ -286,7 +286,7 @@ const PaymentModal = ({
                       navigator.clipboard.writeText('18685442407');
                       alert('微信已复制到剪贴板！');
                     }}
-                    className="px-4 py-2 bg-emerald-500 text-white text-xs font-black rounded-xl hover:bg-emerald-600 transition-colors"
+                    className="px-4 py-2 bg-orange-500 text-white text-xs font-black rounded-xl hover:bg-orange-600 transition-colors"
                   >
                     复制微信
                   </button>
@@ -410,14 +410,16 @@ function App() {
 
   // Compute theme variables
   const themeVars = {
-    '--theme-primary': data.themeColor,
-    '--theme-readable-primary': data.darkMode ? '#ffffff' : (isLightColor(data.themeColor) ? '#334155' : data.themeColor),
-    '--theme-border': data.darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-    '--theme-card': data.darkMode ? '#1c1c1e' : '#ffffff',
-    '--theme-input': data.darkMode ? '#2c2c2e' : '#f8fafc',
-    '--theme-surface': data.darkMode ? '#000000' : '#f8f9fb',
-    '--theme-accent': data.themeColor,
-  } as React.CSSProperties;
+          '--theme-primary': data.themeColor,
+          '--theme-readable-primary': '#ffffff',
+          '--theme-label': '#ffffff', 
+          '--theme-border': 'rgba(255,255,255,0.06)',
+          '--theme-card': '#1c1c1e',
+          '--theme-input': '#2c2c2e',
+          '--theme-surface': '#000000',
+          '--theme-accent': '#D9F217',
+          '--theme-secondary': '#D9F217', 
+        } as React.CSSProperties;
   
   // Ref for the scaling container (sizing logic)
   const containerRef = useRef<HTMLDivElement>(null);
@@ -521,7 +523,7 @@ function App() {
 
     // Create a temporary toast to guide user
     const toast = document.createElement('div');
-    toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl z-[9999] font-bold no-print animate-bounce';
+    toast.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-[#D9F217] text-[#1A1C1E] px-6 py-3 rounded-full shadow-2xl z-[9999] font-bold no-print animate-bounce';
     toast.innerHTML = withWatermark ? '🚀 正在为您生成【水印预览版】PDF...' : '✨ 正在为您生成【高清无水印版】PDF...';
     document.body.appendChild(toast);
     
@@ -570,17 +572,17 @@ function App() {
             <Layout size={24} strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight leading-none">
+            <h1 className="text-2xl font-black tracking-tight leading-none text-[var(--theme-label)]">
               智绘简历
             </h1>
-            <p className={`text-[10px] uppercase tracking-[0.2em] font-extrabold mt-1.5 opacity-90 ${data.darkMode ? 'text-accent' : 'text-accent'}`}>
+            <p className={`text-[10px] uppercase tracking-[0.2em] font-extrabold mt-1.5 opacity-90 text-[var(--theme-label)]`}>
               Smart Resume Builder
             </p>
           </div>
         </div>
         <button 
           onClick={handleReset}
-          className={`relative z-10 w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-white/20 hover:text-white hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+          className={`relative z-10 w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
           title="重置简历内容"
         >
           <RotateCcw size={20} />
@@ -591,9 +593,7 @@ function App() {
         <ThemeSelector 
           currentTheme={data.theme} 
           currentColor={data.themeColor}
-          darkMode={data.darkMode || false}
           onThemeChange={(t, c) => setData({ ...data, theme: t, themeColor: c })} 
-          onDarkModeToggle={(isDark) => setData({ ...data, darkMode: isDark })}
         />
         <LayoutSelector 
           currentLayout={data.layout || LayoutType.Classic}
@@ -639,7 +639,7 @@ function App() {
         <div className={`h-24 flex items-center justify-between px-10 no-print z-20 sticky top-0 backdrop-blur-xl transition-colors duration-500 ${data.darkMode ? 'bg-[#121212]/80' : 'bg-surface/80'}`}>
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
-              <h2 className={`text-lg font-black tracking-tight ${data.darkMode ? 'text-white' : 'text-dark'}`}>预览实时更新</h2>
+              <h2 className={`text-lg font-black tracking-tight text-[var(--theme-label)]`}>预览实时更新</h2>
               <div className="flex items-center gap-2">
                 {saveError ? (
                   <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
@@ -658,7 +658,7 @@ function App() {
             <div className="flex bg-white/10 p-1 rounded-2xl no-print">
               <button 
                 onClick={() => setLayoutMode('single')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${layoutMode === 'single' ? 'bg-white text-dark shadow-sm' : 'text-white/60 hover:text-white'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${layoutMode === 'single' ? 'bg-white text-dark shadow-sm' : 'text-[var(--theme-label)] opacity-60 hover:text-[var(--theme-label)] hover:opacity-100'}`}
                 title="单列排版"
               >
                 <Columns size={16} />
@@ -666,7 +666,7 @@ function App() {
               </button>
               <button 
                 onClick={() => setLayoutMode('grid')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${layoutMode === 'grid' ? 'bg-white text-dark shadow-sm' : 'text-white/60 hover:text-white'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${layoutMode === 'grid' ? 'bg-white text-dark shadow-sm' : 'text-[var(--theme-label)] opacity-60 hover:text-[var(--theme-label)] hover:opacity-100'}`}
                 title="三列并排"
               >
                 <LayoutGrid size={16} />

@@ -5,9 +5,7 @@ import { Palette, ChevronDown, Sparkles, Heart, Moon, Sun, Wind } from 'lucide-r
 interface ThemeSelectorProps {
   currentTheme: ThemeType;
   currentColor: string;
-  darkMode: boolean;
   onThemeChange: (theme: ThemeType, color: string) => void;
-  onDarkModeToggle: (isDark: boolean) => void;
 }
 
 const themeCategories = [
@@ -18,7 +16,7 @@ const themeCategories = [
     themes: [
       { id: ThemeType.DopaminePink, name: '多巴胺粉', color: '#ff4d4f' },
       { id: ThemeType.DopamineYellow, name: '多巴胺黄', color: '#fadb14' },
-      { id: ThemeType.DopamineBlue, name: '多巴胺蓝', color: '#1890ff' },
+      { id: ThemeType.DopamineGreen, name: '极光绿', color: '#D9F217' },
       { id: ThemeType.DopaminePurple, name: '多巴胺紫', color: '#722ed1' },
       { id: ThemeType.DopamineOrange, name: '多巴胺橙', color: '#fa8c16' },
     ]
@@ -28,10 +26,10 @@ const themeCategories = [
     icon: Heart,
     color: '#ff85c0',
     themes: [
-      { id: ThemeType.MacaronMint, name: '薄荷绿', color: '#b5f5ec' },
+      { id: ThemeType.MacaronMint, name: '薄荷绿', color: '#D9F217' },
       { id: ThemeType.MacaronPurple, name: '罗兰紫', color: '#efdbff' },
       { id: ThemeType.MacaronPeach, name: '蜜桃粉', color: '#ffd8bf' },
-      { id: ThemeType.MacaronSky, name: '天空蓝', color: '#bae7ff' },
+      { id: ThemeType.MacaronGreen, name: '极光绿', color: '#D9F217' },
       { id: ThemeType.MacaronCream, name: '奶油黄', color: '#fffbe6' },
     ]
   },
@@ -41,7 +39,7 @@ const themeCategories = [
     color: '#a8071a',
     themes: [
       { id: ThemeType.ChineseInk, name: '水墨黑', color: '#262626' },
-      { id: ThemeType.ChineseCyan, name: '天青色', color: '#3e8e9e' },
+      { id: ThemeType.ChineseBamboo, name: '竹叶绿', color: '#D9F217' },
       { id: ThemeType.ChineseRed, name: '中国红', color: '#a8071a' },
       { id: ThemeType.ChineseGold, name: '琉璃金', color: '#874d00' },
       { id: ThemeType.ChineseJade, name: '翡翠绿', color: '#237804' },
@@ -54,9 +52,9 @@ const themeCategories = [
     themes: [
       { id: ThemeType.NatureForest, name: '深林绿', color: '#135200' },
       { id: ThemeType.NatureSunset, name: '落日红', color: '#d4380d' },
-      { id: ThemeType.NatureOcean, name: '深海蓝', color: '#003a8c' },
-      { id: ThemeType.NatureDesert, name: '沙漠黄', color: '#874d00' },
-      { id: ThemeType.OceanGradient, name: '海盐渐变', color: '#0ea5e9' },
+      { id: ThemeType.NatureLake, name: '湖水绿', color: '#D9F217' },
+      { id: ThemeType.NatureDesert, name: '橄榄绿', color: '#D9F217' },
+      { id: ThemeType.GreenGradient, name: '极光绿渐变', color: '#D9F217' },
     ]
   },
   {
@@ -65,15 +63,16 @@ const themeCategories = [
     color: '#722ed1',
     themes: [
       { id: ThemeType.CyberNeon, name: '霓虹紫', color: '#eb2f96' },
-      { id: ThemeType.CyberElectric, name: '电光蓝', color: '#13c2c2' },
+      { id: ThemeType.CyberElectric, name: '电光绿', color: '#D9F217' },
       { id: ThemeType.RetroSlate, name: '复古灰', color: '#262626' },
-      { id: ThemeType.RetroNavy, name: '海军蓝', color: '#002329' },
+      { id: ThemeType.RetroDeepGreen, name: '复古绿', color: '#D9F217' },
       { id: ThemeType.RetroWine, name: '波尔多红', color: '#5c0011' },
     ]
   }
 ];
 
-const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, currentColor, darkMode, onThemeChange, onDarkModeToggle }) => {
+const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, currentColor, onThemeChange }) => {
+  const darkMode = true; // 强制开启黑夜模式
   const [activeCategory, setActiveCategory] = useState<string | null>(
     themeCategories.find(cat => cat.themes.some(t => t.id === currentTheme))?.name || '多巴胺系列'
   );
@@ -88,19 +87,10 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, currentColo
             <Palette size={22} strokeWidth={2.5} />
           </div>
           <div>
-            <span className={`font-black text-lg tracking-tight block ${darkMode ? 'text-white' : 'text-dark'}`}>简历主题 & 智能配色</span>
-            <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white/30' : 'text-dark/30'}`}>Theme Customization</span>
+            <span className={`font-black text-lg tracking-tight block text-[var(--theme-label)]`}>简历主题 & 智能配色</span>
+            <span className={`text-[10px] font-black uppercase tracking-[0.2em] text-[var(--theme-label)] opacity-30`}>Theme Customization</span>
           </div>
         </div>
-
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => onDarkModeToggle(!darkMode)}
-          className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${darkMode ? 'bg-accent text-dark' : 'bg-surface text-dark/40 hover:text-dark hover:bg-white hover:shadow-lg'}`}
-          title={darkMode ? "切换到明亮模式" : "切换到暗夜模式"}
-        >
-          {darkMode ? <Sun size={20} strokeWidth={2.5} /> : <Moon size={20} strokeWidth={2.5} />}
-        </button>
       </div>
       
       <div className="space-y-4 relative z-10">
@@ -188,9 +178,9 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, currentColo
               />
             </div>
             <div className="flex flex-col flex-1">
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 ${darkMode ? 'text-white/30' : 'text-dark/30'}`}>自定义主色 (Primary Color)</span>
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 text-[var(--theme-label)] opacity-30`}>自定义主色 (Primary Color)</span>
               <div className="flex items-center justify-between">
-                <span className={`text-base font-black uppercase font-mono tracking-tighter ${darkMode ? 'text-white' : 'text-dark'}`}>{currentColor}</span>
+                <span className={`text-base font-black uppercase font-mono tracking-tighter text-[var(--theme-label)]`}>{currentColor}</span>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center opacity-0 group-hover/picker:opacity-100 transition-all duration-500 rotate-12 ${darkMode ? 'bg-accent text-dark' : 'bg-dark text-accent'}`}>
                   <Sparkles size={16} />
                 </div>

@@ -14,7 +14,7 @@
               accent: '#D9F217',
               surface: '#F8F9FB',
               dark: '#1A1C1E',
-              'soft-blue': '#E2E8F0',
+              'soft-green': '#E2F0E2',
             },
             borderRadius: {
               '3xl': '1.5rem',
@@ -130,6 +130,11 @@
       .custom-scrollbar::-webkit-scrollbar-thumb {
         background-color: #cbd5e1;
         border-radius: 20px;
+      }
+
+      /* Fix placeholder color for dark mode */
+      input::placeholder, textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
       }
     </style>
   <script type="importmap">
