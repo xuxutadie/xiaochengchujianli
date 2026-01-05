@@ -3,7 +3,12 @@ import { ResumeData } from "../types";
 
 // Initialize the Gemini client using the environment variable
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '') || '';
-const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+
+// Ensure backendUrl has a protocol
+if (backendUrl && !backendUrl.startsWith('http')) {
+  backendUrl = `https://${backendUrl}`;
+}
 
 const genAI = (apiKey && apiKey !== 'PLACEHOLDER_API_KEY') ? new GoogleGenAI({ apiKey }) : null;
 

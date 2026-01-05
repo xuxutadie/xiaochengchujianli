@@ -471,7 +471,10 @@ function App() {
   // 2. Save to LocalStorage on Change
   useEffect(() => {
     const checkBackend = async () => {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      if (backendUrl && !backendUrl.startsWith('http')) {
+        backendUrl = `https://${backendUrl}`;
+      }
       console.log('🔍 正在检测后端连接...', backendUrl);
       try {
         const res = await fetch(`${backendUrl}/api/health`);
