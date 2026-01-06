@@ -40,21 +40,23 @@ app.get('/api/health', async (req, res) => {
 });
 
 // PostgreSQL connection
-const dbConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_CONNECTION_STRING;
+// Prioritize Zeabur's internal connection string which is more reliable for private networking
+const dbConnectionString = process.env.POSTGRES_CONNECTION_STRING || process.env.DATABASE_URL || process.env.POSTGRES_URL;
 
 if (!dbConnectionString) {
   console.error('CRITICAL: No database connection string found in environment variables!');
 }
 
 // Determine SSL configuration
-// Disable SSL if:
-// 1. Connecting to localhost/127.0.0.1
-// 2. Using Zeabur's internal connection string (POSTGRES_CONNECTION_STRING) without an external override
+// logic:
+// 1. If we are using Zeabur's internal variable (POSTGRES_CONNECTION_STRING), we MUST disable SSL.
+// 2. If connecting to localhost, disable SSL.
+// 3. Otherwise (external public DB), enable SSL.
+const isZeaburInternal = !!process.env.POSTGRES_CONNECTION_STRING;
 const isLocal = dbConnectionString && (dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1'));
-const isZeaburInternal = !process.env.DATABASE_URL && !process.env.POSTGRES_URL && !!process.env.POSTGRES_CONNECTION_STRING;
-const useSsl = !(isLocal || isZeaburInternal);
+const useSsl = !(isZeaburInternal || isLocal);
 
-console.log(`Database Config: SSL=${useSsl ? 'Enabled' : 'Disabled'} (Local=${isLocal}, ZeaburInternal=${isZeaburInternal})`);
+console.log(`Database Config: SSL=${useSsl ? 'Enabled' : 'Disabled'} (Reason: ZeaburInternal=${isZeaburInternal}, Local=${isLocal})`);
 
 const pool = new Pool({
   connectionString: dbConnectionString,
