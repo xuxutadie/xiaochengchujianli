@@ -84,6 +84,30 @@ app.post('/api/verify', async (req, res) => {
   }
 });
 
+// Admin endpoint to get stats
+app.post('/api/admin/stats', async (req, res) => {
+  const { adminKey } = req.body;
+  if (adminKey !== process.env.ADMIN_KEY) return res.status(403).json({ success: false, message: '无权操作' });
+
+  try {
+    const totalRes = await pool.query('SELECT COUNT(*) FROM verification_codes');
+    const usedRes = await pool.query('SELECT COUNT(*) FROM verification_codes WHERE is_used = true');
+    const codesRes = await pool.query('SELECT * FROM verification_codes ORDER BY created_at DESC LIMIT 100');
+
+    res.json({
+      success: true,
+      stats: {
+        total: parseInt(totalRes.rows[0].count),
+        used: parseInt(usedRes.rows[0].count),
+        unused: parseInt(totalRes.rows[0].count) - parseInt(usedRes.rows[0].count)
+      },
+      codes: codesRes.rows
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: '获取数据失败' });
+  }
+});
+
 // Admin endpoint to add codes (For initial setup)
 app.post('/api/admin/add-codes', async (req, res) => {
   const { codes, adminKey } = req.body;

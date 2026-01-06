@@ -5,7 +5,8 @@ import ResumeForm from './components/ResumeForm';
 import ResumePreview from './components/ResumePreview';
 import ThemeSelector from './components/ThemeSelector';
 import LayoutSelector from './components/LayoutSelector';
-import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket } from 'lucide-react';
+import AdminDashboard from './components/AdminDashboard';
+import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket, Settings } from 'lucide-react';
 
 const STORAGE_KEY = 'smart-resume-kid-data-v1';
 
@@ -433,6 +434,7 @@ function App() {
   const [showWatermark, setShowWatermark] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   // Compute theme variables
   const themeVars = {
@@ -453,6 +455,15 @@ function App() {
 
   // 1. Load from LocalStorage on Mount
   useEffect(() => {
+    // Check for admin route
+    if (window.location.hash === '#/admin') {
+      setShowAdmin(true);
+    }
+    const handleHashChange = () => {
+      if (window.location.hash === '#/admin') setShowAdmin(true);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+
     const saved = localStorage.getItem(STORAGE_KEY);
     const savedWidth = localStorage.getItem('sidebar-width');
     if (savedWidth) setSidebarWidth(parseInt(savedWidth));
@@ -627,13 +638,22 @@ function App() {
             </p>
           </div>
         </div>
-        <button 
-          onClick={handleReset}
-          className={`relative z-10 w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
-          title="重置简历内容"
-        >
-          <RotateCcw size={20} />
-        </button>
+        <div className="relative z-10 flex items-center gap-2">
+          <button 
+            onClick={() => setShowAdmin(true)}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            title="管理后台"
+          >
+            <Settings size={20} />
+          </button>
+          <button 
+            onClick={handleReset}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            title="重置简历内容"
+          >
+            <RotateCcw size={20} />
+          </button>
+        </div>
       </div>
       
       <div className={`flex-1 overflow-y-auto p-8 custom-scrollbar transition-colors duration-500 ${data.darkMode ? 'bg-[#1a1a1a]' : 'bg-surface'}`}>
@@ -656,6 +676,17 @@ function App() {
     // Add print: classes to unlock layout constraints
     <div className={`flex h-screen overflow-hidden font-sans print:block print:h-auto print:overflow-visible transition-colors duration-500 ${data.darkMode ? 'bg-[#121212] text-white' : 'bg-surface text-dark'}`} style={themeVars}>
       
+      {/* Admin Dashboard */}
+      {showAdmin && (
+        <AdminDashboard 
+          onClose={() => {
+            setShowAdmin(false);
+            window.location.hash = '';
+          }} 
+          darkMode={data.darkMode}
+        />
+      )}
+
       {/* Left: Editor Sidebar (Desktop) */}
       <div 
         className={`hidden md:flex flex-shrink-0 flex-col no-print z-20 shadow-xl border-r-2 border-[var(--theme-border)] transition-colors duration-500 ${data.darkMode ? 'bg-[#1a1a1a]' : 'bg-white'}`}
