@@ -97,7 +97,16 @@ app.post('/api/verify', async (req, res) => {
 // Admin endpoint to get stats
 app.post('/api/admin/stats', async (req, res) => {
   const { adminKey } = req.body;
-  if (adminKey !== process.env.ADMIN_KEY) return res.status(403).json({ success: false, message: '无权操作' });
+  console.log(`[Admin] Login attempt with key: ${adminKey ? adminKey.substring(0,2) + '***' : 'none'}`);
+  
+  if (!process.env.ADMIN_KEY) {
+    console.error('[Admin] ADMIN_KEY environment variable is NOT SET!');
+    return res.status(500).json({ success: false, message: '服务器未配置管理员密钥' });
+  }
+
+  if (adminKey !== process.env.ADMIN_KEY) {
+    return res.status(403).json({ success: false, message: '密钥不正确' });
+  }
 
   try {
     const totalRes = await pool.query('SELECT COUNT(*) FROM verification_codes');
