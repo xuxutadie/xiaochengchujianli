@@ -28,9 +28,15 @@ console.log('AI Configuration:', {
   hasEndpointId: !!VOLC_ENDPOINT_ID
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch (err) {
+    console.error('Health check DB error:', err);
+    res.json({ status: 'ok', db: 'disconnected', error: err.message, timestamp: new Date().toISOString() });
+  }
 });
 
 // PostgreSQL connection
@@ -144,7 +150,8 @@ app.post('/api/admin/stats', async (req, res) => {
       codes: codesRes.rows
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: '获取数据失败' });
+    console.error('[Admin] Stats error:', err);
+    res.status(500).json({ success: false, message: '获取数据失败: ' + err.message });
   }
 });
 
