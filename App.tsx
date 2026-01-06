@@ -641,17 +641,17 @@ function App() {
         <div className="relative z-10 flex items-center gap-2">
           <button 
             onClick={() => setShowAdmin(true)}
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10' : 'bg-white/10 text-white/80 hover:text-white hover:bg-white/20'}`}
             title="管理后台"
           >
-            <Settings size={20} />
+            <Settings size={18} />
           </button>
           <button 
             onClick={handleReset}
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'text-[var(--theme-label)]/20 hover:text-[var(--theme-label)] hover:bg-white/5' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10' : 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20'}`}
             title="重置简历内容"
           >
-            <RotateCcw size={20} />
+            <RotateCcw size={18} />
           </button>
         </div>
       </div>
