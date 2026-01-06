@@ -46,11 +46,19 @@ if (!dbConnectionString) {
   console.error('CRITICAL: No database connection string found in environment variables!');
 }
 
+// Determine SSL configuration
+// Disable SSL if:
+// 1. Connecting to localhost/127.0.0.1
+// 2. Using Zeabur's internal connection string (POSTGRES_CONNECTION_STRING) without an external override
+const isLocal = dbConnectionString && (dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1'));
+const isZeaburInternal = !process.env.DATABASE_URL && !process.env.POSTGRES_URL && !!process.env.POSTGRES_CONNECTION_STRING;
+const useSsl = !(isLocal || isZeaburInternal);
+
+console.log(`Database Config: SSL=${useSsl ? 'Enabled' : 'Disabled'} (Local=${isLocal}, ZeaburInternal=${isZeaburInternal})`);
+
 const pool = new Pool({
   connectionString: dbConnectionString,
-  ssl: (dbConnectionString && (dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1'))) 
-    ? false 
-    : { rejectUnauthorized: false }
+  ssl: useSsl ? { rejectUnauthorized: false } : false
 });
 
 // Test connection and initialize table
