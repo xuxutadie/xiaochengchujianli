@@ -483,19 +483,26 @@ function App() {
   useEffect(() => {
     const checkBackend = async () => {
       let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      
+      // 处理域名，确保以 https:// 开头
       if (backendUrl && !backendUrl.startsWith('http')) {
         backendUrl = `https://${backendUrl}`;
       }
+      
+      // 去掉末尾的斜杠
+      backendUrl = backendUrl.replace(/\/$/, '');
+      
       console.log('🔍 正在检测后端连接...', backendUrl);
       try {
         const res = await fetch(`${backendUrl}/api/health`);
         if (res.ok) {
-          console.log('✅ 后端连接成功！健康状态：OK');
+          console.log('✅ 后端连接成功！域名：', backendUrl);
         } else {
-          console.error('❌ 后端返回异常状态码:', res.status);
+          console.error('❌ 后端返回异常状态码:', res.status, '请检查后端服务是否正常运行');
         }
       } catch (err) {
-        console.error('❌ 无法连接到后端，请检查 VITE_BACKEND_URL 配置。错误详情:', err.message);
+        console.error('❌ 无法连接到后端。当前配置域名:', backendUrl, '错误原因:', err.message);
+        console.warn('💡 提示：请确保在 Zeabur 前端设置中 VITE_BACKEND_URL 已更新为新的后端域名');
       }
     };
     checkBackend();
