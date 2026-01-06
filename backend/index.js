@@ -148,7 +148,8 @@ app.post('/api/admin/stats', async (req, res) => {
   try {
     const totalRes = await pool.query('SELECT COUNT(*) FROM verification_codes');
     const usedRes = await pool.query('SELECT COUNT(*) FROM verification_codes WHERE is_used = true');
-    const codesRes = await pool.query('SELECT * FROM verification_codes ORDER BY created_at DESC LIMIT 100');
+    // Default latest 50 for dashboard overview
+    const codesRes = await pool.query('SELECT * FROM verification_codes ORDER BY created_at DESC LIMIT 50');
 
     res.json({
       success: true,
@@ -162,6 +163,119 @@ app.post('/api/admin/stats', async (req, res) => {
   } catch (err) {
     console.error('[Admin] Stats error:', err);
     res.status(500).json({ success: false, message: '获取数据失败: ' + err.message });
+  }
+});
+
+// Admin endpoint: List codes with pagination & filter
+app.post('/api/admin/codes', async (req, res) => {
+  const { adminKey, page = 1, limit = 20, search = '', status = 'all' } = req.body;
+  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const providedKey = (adminKey || '').trim();
+  
+  if (!configuredKey || providedKey !== configuredKey) {
+    return res.status(403).json({ success: false, message: '无权操作' });
+  }
+
+  try {
+    const offset = (page - 1) * limit;
+    let queryText = 'SELECT * FROM verification_codes WHERE 1=1';
+    let countQueryText = 'SELECT COUNT(*) FROM verification_codes WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+
+    if (search) {
+      queryText += ` AND code ILIKE $${paramIndex}`;
+      countQueryText += ` AND code ILIKE $${paramIndex}`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (status === 'used') {
+      queryText += ' AND is_used = true';
+      countQueryText += ' AND is_used = true';
+    } else if (status === 'unused') {
+      queryText += ' AND is_used = false';
+      countQueryText += ' AND is_used = false';
+    }
+
+    queryText += ` ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    
+    const totalRes = await pool.query(countQueryText, params);
+    const codesRes = await pool.query(queryText, [...params, limit, offset]);
+
+    res.json({
+      success: true,
+      total: parseInt(totalRes.rows[0].count),
+      page,
+      limit,
+      codes: codesRes.rows
+    });
+  } catch (err) {
+    console.error('List codes error:', err);
+    res.status(500).json({ success: false, message: '获取列表失败' });
+  }
+});
+
+// Admin endpoint: Generate random codes
+app.post('/api/admin/generate', async (req, res) => {
+  const { adminKey, count = 10, prefix = '' } = req.body;
+  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  
+  if (!configuredKey || (adminKey || '').trim() !== configuredKey) {
+    return res.status(403).json({ success: false, message: '无权操作' });
+  }
+
+  const generateCode = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 1, 0 to avoid confusion
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  try {
+    const newCodes = [];
+    const targetCount = Math.min(Math.max(parseInt(count), 1), 500); // Limit 1-500
+
+    for (let i = 0; i < targetCount; i++) {
+      const code = prefix + generateCode();
+      await pool.query(
+        'INSERT INTO verification_codes (code) VALUES ($1) ON CONFLICT DO NOTHING',
+        [code]
+      );
+      newCodes.push(code);
+    }
+
+    res.json({ success: true, message: `成功生成 ${newCodes.length} 个验证码`, count: newCodes.length });
+  } catch (err) {
+    console.error('Generate codes error:', err);
+    res.status(500).json({ success: false, message: '生成失败' });
+  }
+});
+
+// Admin endpoint: Delete code
+app.post('/api/admin/delete', async (req, res) => {
+  const { adminKey, id, type } = req.body; // type: 'single' | 'used'
+  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  
+  if (!configuredKey || (adminKey || '').trim() !== configuredKey) {
+    return res.status(403).json({ success: false, message: '无权操作' });
+  }
+
+  try {
+    if (type === 'used') {
+      const result = await pool.query('DELETE FROM verification_codes WHERE is_used = true');
+      res.json({ success: true, message: `已清理 ${result.rowCount} 个已使用验证码` });
+    } else if (id) {
+      await pool.query('DELETE FROM verification_codes WHERE id = $1', [id]);
+      res.json({ success: true, message: '删除成功' });
+    } else {
+      res.status(400).json({ success: false, message: '参数错误' });
+    }
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ success: false, message: '删除失败' });
   }
 });
 
