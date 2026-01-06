@@ -16,7 +16,7 @@ const pool = new Pool({ connectionString });
 
 async function importCodes() {
   try {
-    const codesPath = path.join(__dirname, '../codes.json');
+    const codesPath = path.join(__dirname, '../public/codes.json');
     if (!fs.existsSync(codesPath)) {
       console.error('错误: 找不到 codes.json 文件');
       return;
