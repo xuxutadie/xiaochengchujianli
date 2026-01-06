@@ -16,7 +16,8 @@ const themeCategories = [
     themes: [
       { id: ThemeType.DopaminePink, name: '多巴胺粉', color: '#ff4d4f' },
       { id: ThemeType.DopamineYellow, name: '多巴胺黄', color: '#fadb14' },
-      { id: ThemeType.DopamineGreen, name: '极光绿', color: '#D9F217' },
+      { id: ThemeType.DopamineGreen, name: '多巴胺绿', color: '#52c41a' },
+      { id: ThemeType.DopamineBlue, name: '多巴胺蓝', color: '#1890ff' },
       { id: ThemeType.DopaminePurple, name: '多巴胺紫', color: '#722ed1' },
       { id: ThemeType.DopamineOrange, name: '多巴胺橙', color: '#fa8c16' },
     ]
@@ -26,10 +27,11 @@ const themeCategories = [
     icon: Heart,
     color: '#ff85c0',
     themes: [
-      { id: ThemeType.MacaronMint, name: '薄荷绿', color: '#D9F217' },
+      { id: ThemeType.MacaronMint, name: '薄荷绿', color: '#b7eb8f' },
+      { id: ThemeType.MacaronBlue, name: '天空蓝', color: '#bae7ff' },
       { id: ThemeType.MacaronPurple, name: '罗兰紫', color: '#efdbff' },
       { id: ThemeType.MacaronPeach, name: '蜜桃粉', color: '#ffd8bf' },
-      { id: ThemeType.MacaronGreen, name: '极光绿', color: '#D9F217' },
+      { id: ThemeType.MacaronGreen, name: '奶油绿', color: '#d9f7be' },
       { id: ThemeType.MacaronCream, name: '奶油黄', color: '#fffbe6' },
     ]
   },
@@ -39,7 +41,8 @@ const themeCategories = [
     color: '#a8071a',
     themes: [
       { id: ThemeType.ChineseInk, name: '水墨黑', color: '#262626' },
-      { id: ThemeType.ChineseBamboo, name: '竹叶绿', color: '#D9F217' },
+      { id: ThemeType.ChineseBamboo, name: '竹叶绿', color: '#237804' },
+      { id: ThemeType.ChineseBlue, name: '青花瓷', color: '#1d39c4' },
       { id: ThemeType.ChineseRed, name: '中国红', color: '#a8071a' },
       { id: ThemeType.ChineseGold, name: '琉璃金', color: '#874d00' },
       { id: ThemeType.ChineseJade, name: '翡翠绿', color: '#237804' },
@@ -52,8 +55,9 @@ const themeCategories = [
     themes: [
       { id: ThemeType.NatureForest, name: '深林绿', color: '#135200' },
       { id: ThemeType.NatureSunset, name: '落日红', color: '#d4380d' },
-      { id: ThemeType.NatureLake, name: '湖水绿', color: '#D9F217' },
-      { id: ThemeType.NatureDesert, name: '橄榄绿', color: '#D9F217' },
+      { id: ThemeType.NatureLake, name: '碧湖蓝', color: '#096dd9' },
+      { id: ThemeType.NatureOcean, name: '海洋蓝', color: '#003a8c' },
+      { id: ThemeType.NatureDesert, name: '大漠黄', color: '#874d00' },
       { id: ThemeType.GreenGradient, name: '极光绿渐变', color: '#D9F217' },
     ]
   },
@@ -63,10 +67,20 @@ const themeCategories = [
     color: '#722ed1',
     themes: [
       { id: ThemeType.CyberNeon, name: '霓虹紫', color: '#eb2f96' },
-      { id: ThemeType.CyberElectric, name: '电光绿', color: '#D9F217' },
+      { id: ThemeType.CyberBlue, name: '电光蓝', color: '#0050b3' },
+      { id: ThemeType.CyberElectric, name: '电光绿', color: '#73d13d' },
       { id: ThemeType.RetroSlate, name: '复古灰', color: '#262626' },
-      { id: ThemeType.RetroDeepGreen, name: '复古绿', color: '#D9F217' },
+      { id: ThemeType.RetroDeepGreen, name: '复古深绿', color: '#135200' },
       { id: ThemeType.RetroWine, name: '波尔多红', color: '#5c0011' },
+    ]
+  },
+  {
+    name: '商务专业系列',
+    icon: Palette,
+    color: '#002766',
+    themes: [
+      { id: ThemeType.ProfessionalBlue, name: '专业蓝', color: '#002766' },
+      { id: ThemeType.ProfessionalSlate, name: '高级灰', color: '#434343' },
     ]
   }
 ];

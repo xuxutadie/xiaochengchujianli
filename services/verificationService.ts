@@ -52,7 +52,12 @@ class VerificationService {
    */
   private async verifyWithBackend(code: string, baseUrl: string): Promise<VerificationResult> {
     try {
-      const response = await fetch(`${baseUrl}/api/verify`, {
+      let finalUrl = baseUrl.replace(/\/$/, '');
+      if (!finalUrl.startsWith('http')) {
+        finalUrl = `https://${finalUrl}`;
+      }
+      
+      const response = await fetch(`${finalUrl}/api/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code })

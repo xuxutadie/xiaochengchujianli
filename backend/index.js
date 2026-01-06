@@ -34,9 +34,17 @@ app.get('/api/health', (req, res) => {
 });
 
 // PostgreSQL connection
+const dbConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_CONNECTION_STRING;
+
+if (!dbConnectionString) {
+  console.error('CRITICAL: No database connection string found in environment variables!');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
-  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false }
+  connectionString: dbConnectionString,
+  ssl: (dbConnectionString && (dbConnectionString.includes('localhost') || dbConnectionString.includes('127.0.0.1'))) 
+    ? false 
+    : { rejectUnauthorized: false }
 });
 
 // Test connection and initialize table
@@ -103,14 +111,21 @@ app.post('/api/verify', async (req, res) => {
 // Admin endpoint to get stats
 app.post('/api/admin/stats', async (req, res) => {
   const { adminKey } = req.body;
-  console.log(`[Admin] Login attempt with key: ${adminKey ? adminKey.substring(0,2) + '***' : 'none'}`);
+  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const providedKey = (adminKey || '').trim();
+
+  console.log(`[Admin] Login attempt:
+    - Provided: ${providedKey ? providedKey.substring(0, 2) + '***' : 'none'}
+    - Configured: ${configuredKey ? 'YES (' + configuredKey.substring(0, 2) + '***)' : 'NO'}
+    - Match: ${providedKey === configuredKey}
+  `);
   
-  if (!process.env.ADMIN_KEY) {
+  if (!configuredKey) {
     console.error('[Admin] ADMIN_KEY environment variable is NOT SET!');
     return res.status(500).json({ success: false, message: '服务器未配置管理员密钥' });
   }
 
-  if (adminKey !== process.env.ADMIN_KEY) {
+  if (providedKey !== configuredKey) {
     return res.status(403).json({ success: false, message: '密钥不正确' });
   }
 
@@ -136,8 +151,10 @@ app.post('/api/admin/stats', async (req, res) => {
 // Admin endpoint to add codes (For initial setup)
 app.post('/api/admin/add-codes', async (req, res) => {
   const { codes, adminKey } = req.body;
+  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const providedKey = (adminKey || '').trim();
   
-  if (adminKey !== process.env.ADMIN_KEY) {
+  if (!configuredKey || providedKey !== configuredKey) {
     return res.status(403).json({ success: false, message: '无权操作' });
   }
 

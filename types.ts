@@ -3,11 +3,13 @@ export enum ThemeType {
   DopaminePink = 'dopamine-pink',
   DopamineYellow = 'dopamine-yellow',
   DopamineGreen = 'dopamine-green',
+  DopamineBlue = 'dopamine-blue',
   DopaminePurple = 'dopamine-purple',
   DopamineOrange = 'dopamine-orange',
   
   // 马卡龙系列 (低饱和度、柔和渐变)
   MacaronMint = 'macaron-mint',
+  MacaronBlue = 'macaron-blue',
   MacaronPurple = 'macaron-purple',
   MacaronPeach = 'macaron-peach',
   MacaronGreen = 'macaron-green',
@@ -16,6 +18,7 @@ export enum ThemeType {
   // 中国风系列 (古典、稳重渐变)
   ChineseInk = 'chinese-ink',
   ChineseBamboo = 'chinese-bamboo',
+  ChineseBlue = 'chinese-blue',
   ChineseRed = 'chinese-red',
   ChineseGold = 'chinese-gold',
   ChineseJade = 'chinese-jade',
@@ -29,6 +32,7 @@ export enum ThemeType {
 
   // 赛博朋克系列 (霓虹、对比渐变)
   CyberNeon = 'cyber-neon',
+  CyberBlue = 'cyber-blue',
   CyberElectric = 'cyber-electric',
   CyberAcid = 'cyber-acid',
 
@@ -36,7 +40,12 @@ export enum ThemeType {
   NatureForest = 'nature-forest',
   NatureSunset = 'nature-sunset',
   NatureLake = 'nature-lake',
+  NatureOcean = 'nature-ocean',
   NatureDesert = 'nature-desert',
+
+  // 商务专业系列
+  ProfessionalBlue = 'professional-blue',
+  ProfessionalSlate = 'professional-slate',
 
   // 默认保持一个基础渐变
   GreenGradient = 'green-gradient'
