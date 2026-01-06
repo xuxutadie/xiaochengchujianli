@@ -35,13 +35,17 @@ app.get('/api/health', (req, res) => {
 
 // PostgreSQL connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+  ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false }
 });
 
 // Test connection and initialize table
 const initDb = async () => {
+  console.log('正在尝试连接数据库...');
   try {
-    await pool.query(`
+    const client = await pool.connect();
+    console.log('✅ 数据库连接成功');
+    await client.query(`
       CREATE TABLE IF NOT EXISTS verification_codes (
         id SERIAL PRIMARY KEY,
         code TEXT UNIQUE NOT NULL,
@@ -50,9 +54,11 @@ const initDb = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
-    console.log('Database initialized');
+    client.release();
+    console.log('✅ 数据库表初始化完成');
   } catch (err) {
-    console.error('Database init error:', err);
+    console.error('❌ 数据库连接或初始化失败:', err.message);
+    console.error('请检查 DATABASE_URL 或 POSTGRES_URL 环境变量是否配置正确');
   }
 };
 initDb();
