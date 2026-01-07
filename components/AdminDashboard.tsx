@@ -234,11 +234,11 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
 
   // Main Dashboard View
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 lg:p-8 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 no-print">
-      <div className={`w-full h-full max-w-[1600px] flex rounded-[40px] overflow-hidden shadow-2xl ring-1 ring-white/10 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f5f7] text-dark'}`}>
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-2 md:p-4 lg:p-8 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 no-print">
+      <div className={`w-full h-full max-w-[1600px] flex rounded-3xl md:rounded-[40px] overflow-hidden shadow-2xl ring-1 ring-white/10 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f5f7] text-dark'}`}>
         
         {/* Sidebar */}
-        <div className={`w-20 lg:w-72 flex-shrink-0 flex flex-col border-r ${darkMode ? 'bg-[#151516] border-white/5' : 'bg-white border-dark/5'}`}>
+        <div className={`w-16 md:w-20 lg:w-72 flex-shrink-0 flex flex-col border-r ${darkMode ? 'bg-[#151516] border-white/5' : 'bg-white border-dark/5'}`}>
           <div className="p-6 lg:p-8 flex items-center justify-center lg:justify-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-accent text-black flex items-center justify-center shadow-lg shadow-accent/20">
               <Database size={20} strokeWidth={2.5} />
@@ -276,7 +276,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-w-0 bg-opacity-50">
           {/* Top Bar */}
-          <div className={`h-20 px-8 flex items-center justify-between border-b ${darkMode ? 'bg-[#1c1c1e]/50 border-white/5' : 'bg-white/50 border-dark/5'} backdrop-blur-xl`}>
+          <div className={`h-16 md:h-20 px-4 md:px-8 flex items-center justify-between border-b ${darkMode ? 'bg-[#1c1c1e]/50 border-white/5' : 'bg-white/50 border-dark/5'} backdrop-blur-xl`}>
             <h2 className="text-xl font-black">{activeTab === 'dashboard' ? '概览仪表盘' : '验证码管理'}</h2>
             <div className="flex items-center gap-4">
               <button 
@@ -289,7 +289,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8">
             {activeTab === 'dashboard' && stats && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
