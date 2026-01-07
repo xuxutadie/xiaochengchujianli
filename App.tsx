@@ -787,7 +787,7 @@ function App() {
 
       {/* Mobile Bottom Navigation Bar */}
       <div 
-        className={`md:hidden shrink-0 z-50 flex items-center justify-around border-t ${data.darkMode ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-white border-dark/5 text-dark'}`}
+        className={`md:hidden shrink-0 z-50 flex items-center justify-around border-t no-print ${data.darkMode ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-white border-dark/5 text-dark'}`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}
       >
         <button 

@@ -192,7 +192,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
   // Login View
   if (!isAuthorized) {
     return (
-      <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm no-print">
         <div className={`w-full max-w-md p-8 rounded-[32px] shadow-2xl ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-dark'}`}>
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-black flex items-center gap-2">
@@ -234,7 +234,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
 
   // Main Dashboard View
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 lg:p-8 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 lg:p-8 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 no-print">
       <div className={`w-full h-full max-w-[1600px] flex rounded-[40px] overflow-hidden shadow-2xl ring-1 ring-white/10 ${darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-[#f5f5f7] text-dark'}`}>
         
         {/* Sidebar */}
