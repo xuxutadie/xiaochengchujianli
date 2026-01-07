@@ -6,7 +6,7 @@ import ResumePreview from './components/ResumePreview';
 import ThemeSelector from './components/ThemeSelector';
 import LayoutSelector from './components/LayoutSelector';
 import AdminDashboard from './components/AdminDashboard';
-import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket, Settings } from 'lucide-react';
+import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket, Settings, Edit, Eye } from 'lucide-react';
 
 const STORAGE_KEY = 'smart-resume-kid-data-v1';
 
@@ -409,6 +409,7 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
 
   // Compute theme variables
   const themeVars = {
@@ -500,6 +501,8 @@ function App() {
     const handleResize = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
+        if (containerWidth === 0) return; // Skip if hidden
+
         const availableWidth = containerWidth - 60; 
         const baseWidth = layoutMode === 'grid' ? (794 * 3 + 100) : 794; 
         const newScale = Math.min(availableWidth / baseWidth, 1);
@@ -508,9 +511,15 @@ function App() {
     };
     
     window.addEventListener('resize', handleResize);
-    handleResize(); 
-    return () => window.removeEventListener('resize', handleResize);
-  }, [layoutMode]); // 添加 layoutMode 依赖项
+    // Initial calculation and recalculation on tab switch
+    // Use timeout to ensure layout is updated
+    const timer = setTimeout(handleResize, 100);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [layoutMode, mobileTab]);
 
   // Resizing logic
   useEffect(() => {
@@ -602,16 +611,16 @@ function App() {
 
   const sidebarContent = (
     <>
-      <div className={`p-8 flex justify-between items-center relative overflow-hidden transition-colors duration-500 ${data.darkMode ? 'bg-[#121212] text-white' : 'bg-dark text-white'}`}>
+      <div className={`p-4 md:p-8 flex justify-between items-center relative overflow-hidden transition-colors duration-500 ${data.darkMode ? 'bg-[#121212] text-white' : 'bg-dark text-white'}`}>
         {/* Decorative element */}
         <div className="absolute -top-12 -left-12 w-32 h-32 bg-accent/10 rounded-full blur-3xl"></div>
         
         <div className="relative z-10 flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg rotate-3 group-hover:rotate-0 transition-all ${data.darkMode ? 'bg-accent text-dark shadow-accent/20' : 'bg-accent text-dark shadow-accent/20'}`}>
-            <Layout size={24} strokeWidth={2.5} />
+          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center shadow-lg rotate-3 group-hover:rotate-0 transition-all ${data.darkMode ? 'bg-accent text-dark shadow-accent/20' : 'bg-accent text-dark shadow-accent/20'}`}>
+            <Layout size={20} className="md:w-6 md:h-6" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight leading-none text-[var(--theme-label)]">
+            <h1 className="text-xl md:text-2xl font-black tracking-tight leading-none text-[var(--theme-label)]">
               智绘简历
             </h1>
             <p className={`text-[10px] uppercase tracking-[0.2em] font-extrabold mt-1.5 opacity-90 text-[var(--theme-label)]`}>
@@ -637,7 +646,7 @@ function App() {
         </div>
       </div>
       
-      <div className={`flex-1 overflow-y-auto p-8 custom-scrollbar transition-colors duration-500 ${data.darkMode ? 'bg-[#1a1a1a]' : 'bg-surface'}`}>
+      <div className={`flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar transition-colors duration-500 ${data.darkMode ? 'bg-[#1a1a1a]' : 'bg-surface'}`}>
         <ThemeSelector 
           currentTheme={data.theme} 
           currentColor={data.themeColor}
@@ -655,7 +664,7 @@ function App() {
 
   return (
     // Add print: classes to unlock layout constraints
-    <div className={`flex h-screen overflow-hidden font-sans print:block print:h-auto print:overflow-visible transition-colors duration-500 ${data.darkMode ? 'bg-[#121212] text-white' : 'bg-surface text-dark'}`} style={themeVars}>
+    <div className={`flex h-screen overflow-hidden font-sans print:block print:h-auto print:overflow-visible transition-colors duration-500 flex-col md:flex-row ${data.darkMode ? 'bg-[#121212] text-white' : 'bg-surface text-dark'}`} style={themeVars}>
       
       {/* Admin Dashboard */}
       {showAdmin && (
@@ -687,15 +696,15 @@ function App() {
           ${isResizing ? 'bg-white' : 'bg-red-500/20 group-hover:bg-red-500'}`}></div>
       </div>
 
-      {/* Mobile Sidebar */}
-      <div className="md:hidden w-full flex-shrink-0 flex flex-col no-print z-20 shadow-xl border-b-2 border-[var(--theme-border)] h-[50vh]">
+      {/* Mobile Editor View (Replaces Mobile Sidebar) */}
+      <div className={`md:hidden flex-1 flex flex-col no-print z-20 overflow-hidden ${mobileTab === 'editor' ? 'flex' : 'hidden'}`}>
         {sidebarContent}
       </div>
 
       {/* Right: Preview Area */}
-      <div className={`flex-1 flex flex-col relative print:block print:bg-white print:static print:h-auto print:overflow-visible overflow-hidden z-10 transition-colors duration-500 ${data.darkMode ? 'bg-[#121212]' : 'bg-surface'}`}>
+      <div className={`flex-1 flex flex-col relative print:block print:bg-white print:static print:h-auto print:overflow-visible overflow-hidden z-10 transition-colors duration-500 ${data.darkMode ? 'bg-[#121212]' : 'bg-surface'} ${mobileTab === 'preview' ? 'flex' : 'hidden md:flex'}`}>
         {/* Toolbar */}
-        <div className={`h-24 flex items-center justify-between px-10 no-print z-20 sticky top-0 backdrop-blur-xl transition-colors duration-500 ${data.darkMode ? 'bg-[#121212]/80' : 'bg-surface/80'}`}>
+        <div className={`h-16 md:h-24 flex items-center justify-between px-4 md:px-10 no-print z-20 sticky top-0 backdrop-blur-xl transition-colors duration-500 ${data.darkMode ? 'bg-[#121212]/80' : 'bg-surface/80'}`}>
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
               <h2 className={`text-lg font-black tracking-tight text-[var(--theme-label)]`}>预览实时更新</h2>
@@ -714,7 +723,7 @@ function App() {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="flex bg-white/10 p-1 rounded-2xl no-print">
+            <div className="hidden md:flex bg-white/10 p-1 rounded-2xl no-print">
               <button 
                 onClick={() => setLayoutMode('single')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${layoutMode === 'single' ? 'bg-white text-dark shadow-sm' : 'text-[var(--theme-label)] opacity-60 hover:text-[var(--theme-label)] hover:opacity-100'}`}
@@ -736,10 +745,11 @@ function App() {
             <button 
               onClick={() => setShowPaymentModal(true)}
               disabled={isExporting}
-              className={`flex items-center gap-3 px-8 py-4 rounded-3xl font-extrabold transition-all duration-300 shadow-2xl active:scale-95 disabled:opacity-50 group ${data.darkMode ? 'bg-accent text-dark hover:bg-accent/90 shadow-accent/10' : 'bg-dark text-white hover:bg-dark/90 shadow-dark/10'}`}
+              className={`flex items-center gap-3 px-4 md:px-8 py-3 md:py-4 rounded-3xl font-extrabold transition-all duration-300 shadow-2xl active:scale-95 disabled:opacity-50 group ${data.darkMode ? 'bg-accent text-dark hover:bg-accent/90 shadow-accent/10' : 'bg-dark text-white hover:bg-dark/90 shadow-dark/10'}`}
             >
               <Download size={20} className={`group-hover:-translate-y-0.5 transition-transform ${data.darkMode ? 'text-dark' : 'text-accent'}`} />
-              <span className="text-sm tracking-tight">导出 PDF 下载</span>
+              <span className="text-sm tracking-tight hidden md:inline">导出 PDF 下载</span>
+              <span className="text-sm tracking-tight md:hidden">导出</span>
             </button>
           </div>
         </div>
@@ -747,7 +757,7 @@ function App() {
         {/* Preview Canvas */}
         <div 
           ref={containerRef}
-          className="flex-1 overflow-auto flex items-start justify-center p-8 custom-scrollbar relative print:p-0 print:block print:overflow-visible print:h-auto z-10"
+          className="flex-1 overflow-auto flex items-start justify-center p-4 md:p-8 custom-scrollbar relative print:p-0 print:block print:overflow-visible print:h-auto z-10"
         >
            {/* We attach the print ref here to capture the content layout */}
            <div 
@@ -773,6 +783,31 @@ function App() {
            </div>
         </div>
 
+      </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <div 
+        className={`md:hidden shrink-0 z-50 flex items-center justify-around border-t ${data.darkMode ? 'bg-[#1a1a1a] border-white/5 text-white' : 'bg-white border-dark/5 text-dark'}`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)', height: 'calc(4rem + env(safe-area-inset-bottom))' }}
+      >
+        <button 
+          onClick={() => setMobileTab('editor')}
+          className={`flex flex-col items-center gap-1 transition-all ${mobileTab === 'editor' ? 'opacity-100 scale-110' : 'opacity-40'}`}
+        >
+          <div className={`p-1.5 rounded-xl ${mobileTab === 'editor' ? (data.darkMode ? 'bg-white/10' : 'bg-dark/5') : ''}`}>
+            <Edit size={24} className={mobileTab === 'editor' ? 'text-accent' : ''} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider">编辑简历</span>
+        </button>
+        <button 
+          onClick={() => setMobileTab('preview')}
+          className={`flex flex-col items-center gap-1 transition-all ${mobileTab === 'preview' ? 'opacity-100 scale-110' : 'opacity-40'}`}
+        >
+           <div className={`p-1.5 rounded-xl ${mobileTab === 'preview' ? (data.darkMode ? 'bg-white/10' : 'bg-dark/5') : ''}`}>
+            <Eye size={24} className={mobileTab === 'preview' ? 'text-accent' : ''} />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider">实时预览</span>
+        </button>
       </div>
 
       {/* Payment Modal */}
