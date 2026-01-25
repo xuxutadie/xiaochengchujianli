@@ -917,9 +917,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden flex-1">
                  {data.portfolio.images.slice(0, 8).map((item, i) => (
                    <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[220px]`}>
-                     <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
-                       <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
-                     </div>
+                     <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden flex items-center justify-center">
+                      <img src={item.url} className="max-w-full max-h-full object-contain" />
+                    </div>
                      {item.caption && (
                        <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
                          <p className="text-[10px] font-black text-[var(--theme-readable-primary)] leading-tight text-center tracking-widest">
@@ -1066,8 +1066,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden">
                 {data.socialPractice.images.slice(0, 4).map((item, i) => (
                   <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[300px]`}>
-                    <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden">
-                      <img src={item.url} className="w-full h-full object-contain" style={{ width: 'auto', height: 'auto' }} />
+                    <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden flex items-center justify-center">
+                      <img src={item.url} className="max-w-full max-h-full object-contain" />
                     </div>
                     {item.caption && (
                       <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
@@ -1104,62 +1104,69 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         <span className={style.subTitleClass}>Personal Statement</span>
      </div>
      <div className={`${style.contentPanelClass} !mt-8 !mb-10 !p-0 overflow-hidden`}>
-         <section className="flex-none flex flex-col min-h-0">
-            <div className="relative bg-[var(--theme-card)] flex flex-col items-center"
-                style={{ height: '912px', width: '100%' }}> 
-              {/* 稿纸背景层 */}
-              <div className="absolute inset-0 pointer-events-none opacity-35">
-                <div className="h-full relative w-full">
-                  {/* 横线 (Horizontal lines) */}
-                  <div 
-                    className="absolute inset-0" 
-                    style={{ 
-                      backgroundImage: `linear-gradient(to bottom, var(--theme-readable-primary) 1px, transparent 1px)`,
-                      backgroundSize: '100% 38px',
-                      height: '912px'
-                    }}
-                  />
-                  {/* 竖线 (Vertical lines) */}
-                  <div className="absolute inset-0 grid grid-cols-[repeat(18,1fr)]" style={{ height: '912px', width: '100%' }}>
-                    {Array.from({ length: 18 }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`h-full border-r border-[var(--theme-readable-primary)] ${i === 0 ? 'border-l' : ''}`}
-                      />
-                    ))}
-                  </div>
-                  {/* 底部封口线 (Bottom line) */}
-                  <div className="absolute top-[912px] left-0 right-0 border-b border-[var(--theme-readable-primary)]" />
+         <section className="flex-none flex flex-col min-h-0 h-full">
+            <div className="relative bg-[var(--theme-card)] flex flex-col items-center h-full w-full"> 
+              {data.coverLetterImage ? (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img src={data.coverLetterImage} className="max-w-full max-h-full object-contain shadow-2xl rounded-sm" />
                 </div>
-              </div>
+              ) : (
+                <div className="relative w-full h-full flex flex-col items-center" style={{ height: '912px' }}>
+                  {/* 稿纸背景层 */}
+                  <div className="absolute inset-0 pointer-events-none opacity-35">
+                    <div className="h-full relative w-full">
+                      {/* 横线 (Horizontal lines) */}
+                      <div 
+                        className="absolute inset-0" 
+                        style={{ 
+                          backgroundImage: `linear-gradient(to bottom, var(--theme-readable-primary) 1px, transparent 1px)`,
+                          backgroundSize: '100% 38px',
+                          height: '912px'
+                        }}
+                      />
+                      {/* 竖线 (Vertical lines) */}
+                      <div className="absolute inset-0 grid grid-cols-[repeat(18,1fr)]" style={{ height: '912px', width: '100%' }}>
+                        {Array.from({ length: 18 }).map((_, i) => (
+                          <div 
+                            key={i} 
+                            className={`h-full border-r border-[var(--theme-readable-primary)] ${i === 0 ? 'border-l' : ''}`}
+                          />
+                        ))}
+                      </div>
+                      {/* 底部封口线 (Bottom line) */}
+                      <div className="absolute top-[912px] left-0 right-0 border-b border-[var(--theme-readable-primary)]" />
+                    </div>
+                  </div>
 
-              {/* 文字层 - 保持 100% 确保与背景对齐 */}
-              <div className="relative z-10 text-[24px] leading-[38px] text-black h-full overflow-hidden w-full" 
-                   style={{ 
-                     fontFamily: '"Ma Shan Zheng", cursive',
-                     fontWeight: 400
-                   }}>
-                 <div className="grid grid-cols-[repeat(18,1fr)] h-[38px] mb-[38px] mt-[38px]">
-                   {Array.from({ length: 18 }).map((_, i) => (
-                     <div key={i} className="h-[38px] flex items-center justify-center font-bold">
-                       {i === 6 ? '自' : i === 8 ? '荐' : i === 10 ? '信' : ''}
-                     </div>
-                   ))}
-                 </div>
-                 <div className="flex flex-col text-left text-black">
-                   {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
-                     <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
-                       {/* 段落首行缩进：1个格子 (原为2个，左移一格) */}
-                       <div className="h-[38px]"></div>
-                       {paragraph.split('').map((char, i) => (
-                         <div key={i} className="h-[38px] flex items-center justify-center leading-none">
-                           {char}
-                         </div>
-                       ))}
-                     </div>
-                   ))}
-                 </div>
-              </div>
+                  {/* 文字层 - 保持 100% 确保与背景对齐 */}
+                  <div className="relative z-10 text-[24px] leading-[38px] text-black h-full overflow-hidden w-full" 
+                      style={{ 
+                        fontFamily: '"Ma Shan Zheng", cursive',
+                        fontWeight: 400
+                      }}>
+                    <div className="grid grid-cols-[repeat(18,1fr)] h-[38px] mb-[38px] mt-[38px]">
+                      {Array.from({ length: 18 }).map((_, i) => (
+                        <div key={i} className="h-[38px] flex items-center justify-center font-bold">
+                          {i === 6 ? '自' : i === 8 ? '荐' : i === 10 ? '信' : ''}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex flex-col text-left text-black">
+                      {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
+                        <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
+                          {/* 段落首行缩进：1个格子 (原为2个，左移一格) */}
+                          <div className="h-[38px]"></div>
+                          {paragraph.split('').map((char, i) => (
+                            <div key={i} className="h-[38px] flex items-center justify-center leading-none">
+                              {char}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
            </div>
          </section>
       </div>

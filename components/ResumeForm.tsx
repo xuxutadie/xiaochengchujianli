@@ -144,7 +144,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
   };
   const [isUploading, setIsUploading] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | null>(null);
+  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSection = (id: string) => {
@@ -163,7 +163,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
     });
   };
 
-  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio') => {
+  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter') => {
     setUploadType(type);
     fileInputRef.current?.click();
   };
@@ -215,6 +215,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           updateNested('hobbies', 'images', newImages);
         } else if (uploadType === 'recommendation') {
           onChange({ ...data, recommendationLetterImage: processed });
+        } else if (uploadType === 'coverLetter') {
+          onChange({ ...data, coverLetterImage: processed });
         } else if (uploadType === 'backCover') {
           updateNested('backCover', 'backgroundImage', processed);
         } else if (uploadType === 'socialPractice') {
@@ -1415,6 +1417,49 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
                   <span className={`text-[10px] font-bold ${data.coverLetter.length > 400 ? 'text-red-500' : 'text-white/40'}`}>
                     {data.coverLetter.length} / 400
                   </span>
+                </div>
+
+                {/* 自荐信图片上传 */}
+                <div className="space-y-4 pt-4">
+                  <div className="flex flex-col ml-1 mb-2">
+                    <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">自荐信图片 (上传后将替代文字和格子)</label>
+                    <span className="text-[9px] text-accent font-bold uppercase">Self-Recommendation Image</span>
+                  </div>
+                  
+                  {data.coverLetterImage ? (
+                    <div className="relative group rounded-[40px] overflow-hidden border border-white/5 aspect-[4/3] max-w-lg mx-auto bg-gradient-to-br from-[#1c1c1e] to-[#252529] shadow-xl hover:shadow-accent/10 transition-all duration-500">
+                      <img src={data.coverLetterImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Cover Letter" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-xl">
+                        <button 
+                          onClick={() => triggerUpload('coverLetter')} 
+                          className="w-14 h-14 bg-white text-black rounded-[24px] hover:scale-110 active:scale-95 transition-all shadow-2xl flex items-center justify-center"
+                          title="更换图片"
+                        >
+                          <ImageIcon size={24} />
+                        </button>
+                        <button 
+                          onClick={() => onChange({ ...data, coverLetterImage: '' })} 
+                          className="w-14 h-14 bg-red-500 text-white rounded-[24px] hover:scale-110 active:scale-95 transition-all shadow-2xl flex items-center justify-center"
+                          title="删除图片"
+                        >
+                          <Trash2 size={24} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => triggerUpload('coverLetter')}
+                      className="group w-full py-12 border-2 border-dashed border-white/5 rounded-[40px] text-white/40 hover:border-accent/40 hover:text-white hover:bg-[#2c2c2e]/50 transition-all duration-500 flex flex-col items-center justify-center gap-4 active:scale-[0.98]"
+                    >
+                      <div className="w-16 h-16 rounded-[28px] bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 group-hover:bg-accent/10 group-hover:text-accent">
+                        <Upload size={32} />
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-sm font-black uppercase tracking-[0.1em] text-white/90">点击上传自荐信照片</span>
+                        <span className="text-[9px] opacity-40 font-bold uppercase tracking-widest">Support JPG, PNG formats</span>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
 

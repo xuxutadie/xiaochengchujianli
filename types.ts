@@ -172,6 +172,7 @@ export interface ResumeData {
 
   // Page: Essays
   coverLetter: string; // Self introduction
+  coverLetterImage?: string;
   recommendationLetterImage?: string; // Optional image
   
   // 社会实践

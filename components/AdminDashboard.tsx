@@ -254,7 +254,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${activeTab === item.id 
+                className={`w-full flex items-center justify-center lg:justify-start gap-4 px-4 py-4 rounded-2xl transition-all duration-300 group ${activeTab === item.id 
                   ? (darkMode ? 'bg-white/10 text-white' : 'bg-dark/5 text-dark') 
                   : (darkMode ? 'text-white/40 hover:bg-white/5 hover:text-white' : 'text-dark/40 hover:bg-dark/5 hover:text-dark')}`}
               >
@@ -266,7 +266,7 @@ const AdminDashboard = ({ onClose, darkMode }: { onClose: () => void; darkMode: 
           </nav>
 
           <div className="p-4 mt-auto border-t border-white/5">
-            <button onClick={onClose} className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-500/10 transition-colors">
+            <button onClick={onClose} className="w-full flex items-center justify-center lg:justify-start gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-500/10 transition-colors">
               <X size={22} />
               <span className="hidden lg:block font-bold text-sm">退出登录</span>
             </button>
