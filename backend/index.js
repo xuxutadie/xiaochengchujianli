@@ -226,7 +226,7 @@ app.post('/api/admin/generate', async (req, res) => {
   }
 
   const generateCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 1, 0 to avoid confusion
+    const chars = '0123456789'; 
     let result = '';
     for (let i = 0; i < 8; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
