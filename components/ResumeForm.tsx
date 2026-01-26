@@ -84,7 +84,7 @@ const SectionHeader = ({ icon: Icon, title, description, isOpen, onToggle, onAiA
 );
 
 const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
-  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'certificates', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
+  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
   const [isPolishing, setIsPolishing] = useState<Record<string, boolean>>({});
   const [aiEditConfig, setAiEditConfig] = useState<{
     isOpen: boolean;
@@ -143,8 +143,9 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
     });
   };
   const [isUploading, setIsUploading] = useState<string | null>(null);
+  const [uploadingGroupId, setUploadingGroupId] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter' | null>(null);
+  const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter' | 'honorGroup' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSection = (id: string) => {
@@ -163,8 +164,9 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
     });
   };
 
-  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter') => {
+  const triggerUpload = (type: 'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter' | 'honorGroup', groupId?: string) => {
     setUploadType(type);
+    if (groupId) setUploadingGroupId(groupId);
     fileInputRef.current?.click();
   };
 
@@ -200,6 +202,20 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
             caption: '证书名称'
           };
           onChange({ ...data, certificates: [...data.certificates, newItem] });
+        } else if (uploadType === 'honorGroup' && uploadingGroupId) {
+          const newItem = {
+            id: Date.now().toString(),
+            url: processed,
+            caption: '奖状/图片'
+          };
+          const newGroups = data.honorGroups?.map(group => {
+            if (group.id === uploadingGroupId) {
+              return { ...group, images: [...group.images, newItem] };
+            }
+            return group;
+          }) || [];
+          onChange({ ...data, honorGroups: newGroups });
+          setUploadingGroupId(null);
         } else if (uploadType === 'hobbies') {
           if (data.hobbies.images.length >= 5) {
             alert('最多只能上传 5 张兴趣特长照片');
@@ -896,17 +912,18 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           )}
         </div>
 
-        {/* 荣誉汇总 */}
+        {/* 荣誉汇总 (分类汇总) */}
         <div className={`bg-[var(--theme-card)] rounded-[32px] transition-all duration-700 overflow-hidden border ${openSections.includes('awards') ? 'border-accent shadow-2xl shadow-accent/5 ring-4 ring-accent/10' : 'border-[var(--theme-border)] shadow-sm'}`}>
           <SectionHeader 
             icon={Star} 
             title="荣誉汇总" 
-            description="Awards Summary"
+            description="Awards & Honors"
             isOpen={openSections.includes('awards')} 
             onToggle={() => toggleSection('awards')}
           />
           {openSections.includes('awards') && (
-            <div className="p-8 space-y-8 animate-in slide-in-from-top-4 duration-500">
+            <div className="p-8 space-y-12 animate-in slide-in-from-top-4 duration-500">
+              {/* 获奖寄语 */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between ml-1">
                   <div className="flex flex-col">
@@ -930,146 +947,161 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
                 />
               </div>
 
-              <div className="space-y-6 pt-8 border-t border-[var(--theme-border)]">
+              {/* 分类荣誉列表 */}
+              <div className="space-y-10 pt-8 border-t border-[var(--theme-border)]">
                 <div className="flex items-center justify-between ml-1">
                   <div className="flex flex-col">
-                    <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">奖项列表</label>
-                    <span className="text-[9px] text-[var(--theme-label)] opacity-60 font-bold uppercase">Awards List</span>
+                    <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">荣誉分类汇总</label>
+                    <span className="text-[9px] text-accent font-bold uppercase">Categorized Honors</span>
                   </div>
                   <button 
                     onClick={() => {
-                      const newAward = { id: Date.now().toString(), name: '', date: '', level: '' };
-                      onChange({ ...data, awards: [...data.awards, newAward] });
+                      const newGroup = { id: Date.now().toString(), category: '', awards: [], images: [] };
+                      onChange({ ...data, honorGroups: [...(data.honorGroups || []), newGroup] });
                     }}
                     className="flex items-center gap-2.5 px-6 py-3.5 bg-accent text-[#1A1C1E] rounded-[32px] text-[13px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent/20"
                   >
                     <Plus size={18} />
-                    添加奖项
+                    添加荣誉分类
                   </button>
                 </div>
-                <div className="grid grid-cols-1 gap-6">
-                  {data.awards.map((award, index) => (
-                    <div key={award.id} className="p-6 bg-gradient-to-br from-[#1c1c1e] to-[#252529] rounded-[36px] border border-white/5 space-y-6 relative group hover:border-accent/30 transition-all shadow-xl hover:shadow-accent/5 duration-500 overflow-hidden">
-                      <div className="flex items-center gap-6 relative z-10">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="space-y-2">
-                            <div className="flex flex-col ml-1">
-                              <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">奖项名称</label>
-                              <span className="text-[9px] text-[var(--theme-label)] opacity-40 font-bold uppercase">Award Name</span>
-                            </div>
-                            <input 
-                              value={award.name} 
-                              onChange={e => {
-                                const newAwards = [...data.awards];
-                                newAwards[index].name = e.target.value;
-                                onChange({ ...data, awards: newAwards });
-                              }}
-                              placeholder="如：三好学生"
-                              className="w-full p-5 bg-[#2c2c2e] border border-white/5 rounded-[28px] text-sm font-bold outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent/50 transition-all text-white placeholder:text-white/10"
-                            />
+
+                <div className="space-y-12">
+                  {(data.honorGroups || []).map((group, groupIndex) => (
+                    <div key={group.id} className="p-8 bg-gradient-to-br from-[#1c1c1e] to-[#252529] rounded-[48px] border border-white/5 space-y-8 relative group hover:border-accent/30 transition-all shadow-2xl duration-500">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 max-w-md">
+                          <div className="flex flex-col ml-1 mb-2">
+                            <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">分类名称</label>
+                            <span className="text-[9px] text-accent font-bold uppercase">Category Name</span>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex flex-col ml-1">
-                              <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">级别/等级</label>
-                              <span className="text-[9px] text-[var(--theme-label)] opacity-40 font-bold uppercase">Level</span>
-                            </div>
-                            <input 
-                              value={award.level} 
-                              onChange={e => {
-                                const newAwards = [...data.awards];
-                                newAwards[index].level = e.target.value;
-                                onChange({ ...data, awards: newAwards });
-                              }}
-                              placeholder="如：校级一等奖"
-                              className="w-full p-5 bg-[#2c2c2e] border border-white/5 rounded-[28px] text-sm font-bold outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent/50 transition-all text-white placeholder:text-white/10"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex flex-col ml-1">
-                              <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">获奖时间</label>
-                              <span className="text-[9px] text-[var(--theme-label)] opacity-40 font-bold uppercase">Date</span>
-                            </div>
-                            <input 
-                              type="month"
-                              value={award.date} 
-                              onChange={e => {
-                                const newAwards = [...data.awards];
-                                newAwards[index].date = e.target.value;
-                                onChange({ ...data, awards: newAwards });
-                              }}
-                              className="w-full p-5 bg-[#2c2c2e] border border-white/5 rounded-[28px] text-sm font-bold outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent/50 transition-all text-white"
-                            />
-                          </div>
+                          <input 
+                            value={group.category} 
+                            onChange={e => {
+                              const newGroups = [...(data.honorGroups || [])];
+                              newGroups[groupIndex].category = e.target.value;
+                              onChange({ ...data, honorGroups: newGroups });
+                            }}
+                            placeholder="如：学科竞赛、体育运动..."
+                            className="w-full p-5 bg-[#2c2c2e] border border-white/5 rounded-[28px] text-lg font-black outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent/50 transition-all text-white placeholder:text-white/10"
+                          />
                         </div>
                         <button 
                           onClick={() => {
-                            const newAwards = data.awards.filter(a => a.id !== award.id);
-                            onChange({ ...data, awards: newAwards });
+                            const newGroups = data.honorGroups?.filter(g => g.id !== group.id);
+                            onChange({ ...data, honorGroups: newGroups });
                           }}
                           className="w-12 h-12 flex items-center justify-center text-white/20 hover:text-white hover:bg-red-500 rounded-[20px] transition-all bg-white/5 shadow-sm active:scale-95 shrink-0"
                         >
                           <Trash2 size={18} />
                         </button>
                       </div>
+
+                      {/* 奖项列表 */}
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between ml-1">
+                          <span className="text-[10px] font-black text-[var(--theme-label)] opacity-60 uppercase tracking-[0.2em]">奖项列表</span>
+                          <button 
+                            onClick={() => {
+                              const newGroups = [...(data.honorGroups || [])];
+                              const newAward = { id: Date.now().toString(), name: '', date: '', level: '' };
+                              newGroups[groupIndex].awards = [...newGroups[groupIndex].awards, newAward];
+                              onChange({ ...data, honorGroups: newGroups });
+                            }}
+                            className="text-accent text-[11px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5"
+                          >
+                            <Plus size={14} /> 添加奖项
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                          {group.awards.map((award, awardIndex) => (
+                            <div key={award.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-[24px] border border-white/5">
+                              <div className="flex-1 grid grid-cols-3 gap-4">
+                                <input 
+                                  value={award.name} 
+                                  onChange={e => {
+                                    const newGroups = [...(data.honorGroups || [])];
+                                    newGroups[groupIndex].awards[awardIndex].name = e.target.value;
+                                    onChange({ ...data, honorGroups: newGroups });
+                                  }}
+                                  placeholder="奖项名称"
+                                  className="bg-transparent text-sm font-bold outline-none border-b border-white/10 focus:border-accent p-1"
+                                />
+                                <input 
+                                  value={award.level} 
+                                  onChange={e => {
+                                    const newGroups = [...(data.honorGroups || [])];
+                                    newGroups[groupIndex].awards[awardIndex].level = e.target.value;
+                                    onChange({ ...data, honorGroups: newGroups });
+                                  }}
+                                  placeholder="级别/等级"
+                                  className="bg-transparent text-sm font-bold outline-none border-b border-white/10 focus:border-accent p-1"
+                                />
+                                <input 
+                                  type="month"
+                                  value={award.date} 
+                                  onChange={e => {
+                                    const newGroups = [...(data.honorGroups || [])];
+                                    newGroups[groupIndex].awards[awardIndex].date = e.target.value;
+                                    onChange({ ...data, honorGroups: newGroups });
+                                  }}
+                                  className="bg-transparent text-sm font-bold outline-none border-b border-white/10 focus:border-accent p-1"
+                                />
+                              </div>
+                              <button 
+                                onClick={() => {
+                                  const newGroups = [...(data.honorGroups || [])];
+                                  newGroups[groupIndex].awards = newGroups[groupIndex].awards.filter(a => a.id !== award.id);
+                                  onChange({ ...data, honorGroups: newGroups });
+                                }}
+                                className="text-white/20 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 图片上传 */}
+                      <div className="space-y-6 pt-6 border-t border-white/5">
+                        <div className="flex items-center justify-between ml-1">
+                          <span className="text-[10px] font-black text-[var(--theme-label)] opacity-60 uppercase tracking-[0.2em]">奖状与图片</span>
+                          <button 
+                            onClick={() => triggerUpload('honorGroup', group.id)}
+                            className="text-accent text-[11px] font-black uppercase tracking-widest hover:underline flex items-center gap-1.5"
+                          >
+                            <Camera size={14} /> 上传图片
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                          {group.images.map((img, imgIndex) => (
+                            <div key={img.id} className="relative group aspect-square rounded-[20px] overflow-hidden border border-white/5 shadow-lg">
+                              <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                              <button 
+                                onClick={() => {
+                                  const newGroups = [...(data.honorGroups || [])];
+                                  newGroups[groupIndex].images = newGroups[groupIndex].images.filter(i => i.id !== img.id);
+                                  onChange({ ...data, honorGroups: newGroups });
+                                }}
+                                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <button 
+                            onClick={() => triggerUpload('honorGroup', group.id)}
+                            className="aspect-square rounded-[20px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center gap-2 text-white/20 hover:border-accent/40 hover:text-accent hover:bg-accent/5 transition-all"
+                          >
+                            <Plus size={24} />
+                            <span className="text-[9px] font-bold uppercase">上传图片</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 荣誉奖状 */}
-        <div className={`bg-[var(--theme-card)] rounded-[32px] transition-all duration-700 overflow-hidden border ${openSections.includes('certificates') ? 'border-accent shadow-2xl shadow-accent/5 ring-4 ring-accent/10' : 'border-[var(--theme-border)] shadow-sm'}`}>
-          <SectionHeader 
-            icon={AwardIcon} 
-            title="荣誉奖状" 
-            description="Certificates"
-            isOpen={openSections.includes('certificates')} 
-            onToggle={() => toggleSection('certificates')}
-          />
-          {openSections.includes('certificates') && (
-            <div className="p-8 space-y-8 animate-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center justify-between ml-1">
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">证书展示</label>
-                  <span className="text-[9px] text-accent font-bold uppercase">Certificates</span>
-                </div>
-                <button 
-                  onClick={() => triggerUpload('awards')}
-                  className="flex items-center gap-2.5 px-6 py-3.5 bg-accent text-[#1A1C1E] rounded-[32px] text-[13px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent/20"
-                >
-                  <Plus size={18} />
-                  添加证书
-                </button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {data.certificates.map((cert, index) => (
-                  <div key={cert.id} className="relative group rounded-[40px] overflow-hidden border border-white/5 bg-gradient-to-br from-[#1c1c1e] to-[#252529] aspect-[3/4] flex flex-col shadow-xl hover:shadow-accent/10 transition-all duration-700">
-                    <img src={cert.url} className="w-full h-full object-cover flex-1 transition-transform duration-700 group-hover:scale-110" alt={cert.caption} />
-                    <div className="absolute inset-x-0 bottom-0 p-6 bg-black/60 backdrop-blur-xl translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                      <input 
-                        value={cert.caption} 
-                        onChange={e => {
-                          const newCerts = [...data.certificates];
-                          newCerts[index].caption = e.target.value;
-                          onChange({ ...data, certificates: newCerts });
-                        }}
-                        className="w-full bg-transparent text-white text-[10px] font-black outline-none border-b border-white/20 pb-2 focus:border-accent transition-colors uppercase tracking-widest"
-                        placeholder="证书名称..."
-                      />
-                    </div>
-                    <button 
-                      onClick={() => {
-                        const newCerts = data.certificates.filter(c => c.id !== cert.id);
-                        onChange({ ...data, certificates: newCerts });
-                      }}
-                      className="absolute top-4 right-4 w-12 h-12 flex items-center justify-center text-white/20 hover:text-white hover:bg-red-500 rounded-[20px] transition-all bg-white/5 shadow-sm hover:shadow-md active:scale-95 shrink-0"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
               </div>
             </div>
           )}

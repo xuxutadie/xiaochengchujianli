@@ -104,6 +104,13 @@ export interface ImageItem {
   caption: string;
 }
 
+export interface HonorGroup {
+  id: string;
+  category: string;
+  awards: Award[];
+  images: ImageItem[];
+}
+
 export interface ResumeData {
   // Global Design Config
   theme: ThemeType;
@@ -161,6 +168,7 @@ export interface ResumeData {
   awards: Award[]; // Text summary
   awardsQuote?: string; // 可自定义的寄语
   certificates: ImageItem[]; // Array of image objects with captions
+  honorGroups?: HonorGroup[]; // 分类荣誉汇总
 
   // Page: Hobbies
   hobbies: {
@@ -249,6 +257,26 @@ export const INITIAL_RESUME_DATA: ResumeData = {
   ],
   awardsQuote: '每一份荣誉都是汗水的结晶',
   certificates: [],
+  honorGroups: [
+    {
+      id: '1',
+      category: '学科竞赛',
+      awards: [
+        { id: '1', name: '全国青少年信息学奥林匹克联赛一等奖', level: '国家级', date: '2023-09' },
+        { id: '4', name: '“希望杯”全国数学邀请赛一等奖', level: '国家级', date: '2022-12' },
+      ],
+      images: []
+    },
+    {
+      id: '2',
+      category: '荣誉称号',
+      awards: [
+        { id: '2', name: '海淀区三好学生', level: '区级', date: '2022-06' },
+        { id: '5', name: '学校“优秀少先队员”称号', level: '校级', date: '2023-03' },
+      ],
+      images: []
+    }
+  ],
   hobbies: {
     content: '热爱编程，能够使用 Python 编写简单的小游戏。利用暑假时间参加了博物馆志愿讲解员活动，累计服务时长 30 小时。同时也喜欢篮球和游泳。',
     specialties: ['创意编程', '博物馆讲解员', '钢琴七级'],

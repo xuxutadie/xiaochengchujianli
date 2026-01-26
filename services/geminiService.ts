@@ -85,13 +85,18 @@ export const generateClosingMessage = async (data: ResumeData): Promise<string> 
   if (backendUrl) {
     try {
       const normalizedBackendUrl = backendUrl.replace(/\/$/, '');
+      const allAwards = [
+        ...(data.awards || []).map(a => a.name),
+        ...(data.honorGroups || []).flatMap(g => g.awards.map(a => a.name))
+      ].filter(Boolean).join(', ');
+
       const response = await fetch(`${normalizedBackendUrl}/api/ai/polish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           text: `姓名: ${data.basicInfo.name || ''}
 学校: ${data.basicInfo.school || ''}
-奖项: ${data.awards?.map(a => a.name).join(', ') || ''}
+奖项: ${allAwards}
 兴趣爱好: ${data.hobbies?.content || ''}
 自我介绍: ${data.coverLetter || ''}
 社会实践: ${data.socialPractice?.content || ''}`,
@@ -110,13 +115,18 @@ export const generateClosingMessage = async (data: ResumeData): Promise<string> 
 
   if (!genAI || !apiKey || apiKey === 'PLACEHOLDER_API_KEY') return "";
   try {
+    const allAwards = [
+      ...(data.awards || []).map(a => a.name),
+      ...(data.honorGroups || []).flatMap(g => g.awards.map(a => a.name))
+    ].filter(Boolean).join(', ');
+
     const prompt = `
       角色: 你是一位资深的小升初教育专家。
       任务: 为学生 ${data.basicInfo.name} 撰写一封完整的小升初自荐信。
       内容依据: 
       - 姓名: ${data.basicInfo.name || ''}
       - 学校: ${data.basicInfo.school || ''}
-      - 获奖情况: ${data.awards?.map(a => a.name).join(', ') || ''}
+      - 获奖情况: ${allAwards}
       - 兴趣爱好: ${data.hobbies?.content || ''}
       - 自我介绍: ${data.coverLetter || ''}
       - 社会实践: ${data.socialPractice?.content || ''}

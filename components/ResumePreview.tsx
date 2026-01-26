@@ -151,11 +151,37 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
 
   const layout = data.layout || LayoutType.Classic;
   const style = getThemeStyles();
-  const certPages = chunk<ImageItem>(data.certificates, 4);
+  
+  // 汇总所有分类中的奖状图片
+  const allHonorImages = (data.honorGroups || []).reduce((acc, group) => {
+    return [...acc, ...(group.images || [])];
+  }, [] as ImageItem[]);
+  
+  // 合并旧的证书和新的分类证书（为了兼容性）
+  const combinedCertificates = [...(data.certificates || []), ...allHonorImages];
+  const certPages = chunk<ImageItem>(combinedCertificates, 4);
+  
   const showPortfolio = !!(data.portfolio.website || (data.portfolio.images && data.portfolio.images.length > 0));
   const showSocialPractice = !!(data.socialPractice.content || (data.socialPractice.images && data.socialPractice.images.length > 0));
   const portfolioOffset = showPortfolio ? 1 : 0;
   const socialPracticeOffset = showSocialPractice ? 1 : 0;
+  const recommendationOffset = data.recommendationLetterImage ? 1 : 0;
+
+  // 分配素质报告：全部放在分页中展示
+  const qualityPages = chunk<ImageItem>(data.qualityReports, 2); 
+
+  // 智能目录项生成
+  const tocItems = [
+    { title: '基本档案', subtitle: 'Profile & Growth', page: 2, icon: <User size={18} /> },
+    ...(qualityPages.length > 0 ? [{ title: '素质表现', subtitle: 'Evaluation', page: 3, icon: <BookOpen size={18} /> }] : []),
+    { title: '荣誉汇总', subtitle: 'Honors & Awards', page: 3 + qualityPages.length, icon: <Award size={18} /> },
+    ...(certPages.length > 0 ? [{ title: '证书展示', subtitle: 'Certificates', page: 4 + qualityPages.length, icon: <FileText size={18} /> }] : []),
+    ...(showPortfolio ? [{ title: '个人作品集', subtitle: 'Portfolio', page: 4 + qualityPages.length + certPages.length, icon: <Palette size={18} /> }] : []),
+    { title: '兴趣与特长', subtitle: 'Hobbies', page: 4 + qualityPages.length + certPages.length + portfolioOffset, icon: <Heart size={18} /> },
+    ...(showSocialPractice ? [{ title: '社会实践', subtitle: 'Practice', page: 5 + qualityPages.length + certPages.length + portfolioOffset, icon: <Users size={18} /> }] : []),
+    { title: '自荐信', subtitle: 'Statement', page: 5 + qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset, icon: <MessageSquare size={18} /> },
+    ...(data.recommendationLetterImage ? [{ title: '推荐信', subtitle: 'Letter', page: 6 + qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset, icon: <Mail size={18} /> }] : []),
+  ];
 
   const PageBackground = () => {
     if (!data.pageBackground) return null;
@@ -472,9 +498,6 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     return frameStyles[frameType] || frameStyles[AvatarFrameType.Classic];
   };
 
-  // 分配素质报告：全部放在分页中展示
-  const qualityPages = chunk<ImageItem>(data.qualityReports, 2); 
-
   return (
     <div 
       ref={ref}
@@ -641,7 +664,47 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         )}
       </div>
 
-      {/* ---------------- PAGE 1 ---------------- */}
+      {/* ---------------- TABLE OF CONTENTS ---------------- */}
+      <div className={`a4-page ${style.pageClass}`}>
+        <PageBackground />
+        <WatermarkOverlay />
+        <StorybookDecoration />
+        <div className={style.headerClass} style={style.headerStyle}>
+          <span className={style.titleClass}>目录</span>
+          <span className={style.subTitleClass}>Table of Contents</span>
+        </div>
+        <div className={style.contentPanelClass + " justify-center"}>
+          <div className="flex flex-col gap-8 px-10">
+            {tocItems.map((item, index) => (
+              <div key={index} className="flex items-center justify-between group">
+                <div className="flex items-center gap-6">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--theme-primary)]/10 flex items-center justify-center text-[var(--theme-primary)] group-hover:bg-[var(--theme-primary)] group-hover:text-white transition-all duration-300">
+                    {item.icon}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black text-[var(--theme-readable-primary)] tracking-widest">{item.title}</span>
+                    <span className="text-xs font-bold text-[var(--theme-readable-primary)]/40 uppercase tracking-widest">{item.subtitle}</span>
+                  </div>
+                </div>
+                <div className="flex-1 border-b-2 border-dotted border-[var(--theme-primary)]/20 mx-6 mb-2"></div>
+                <div className="text-2xl font-black text-[var(--theme-primary)] italic">
+                  {String(item.page).padStart(2, '0')}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-16 pt-8 border-t border-[var(--theme-primary)]/10 flex flex-col items-center">
+             <div className="w-16 h-1 bg-[var(--theme-primary)] opacity-20 rounded-full mb-4"></div>
+             <p className="text-sm font-medium italic text-[var(--theme-readable-primary)] opacity-40">
+               “ 记录成长的点滴，开启未来的篇章 ”
+             </p>
+          </div>
+        </div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">01</div>
+      </div>
+
+      {/* ---------------- PAGE 2 (Original Page 1) ---------------- */}
       <div className={`a4-page ${style.pageClass}`}>
         <PageBackground />
         <WatermarkOverlay />
@@ -754,7 +817,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
              </div>
           </section>
         </div>
-        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">01</div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">02</div>
       </div>
 
       {/* ---------------- PAGE: QUALITY REPORTS (REMAINING) ---------------- */}
@@ -789,7 +852,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               ))}
            </div>
          </div>
-         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(2 + pageIndex).padStart(2, '0')}</div>
+         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + pageIndex).padStart(2, '0')}</div>
        </div>
      ))}
 
@@ -804,16 +867,65 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
        </div>
        <div className={style.contentPanelClass}>
           <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2`}>
-            <div className="space-y-4 flex flex-col justify-start">
-              {data.awards.filter(a => a.name || a.date || a.level).map((award, i) => {
-                // 根据数量自动计算高度和间距
-                const count = data.awards.filter(a => a.name || a.date || a.level).length;
-                const isCompact = count > 5;
-                const isUltraCompact = count > 8;
+            <div className="space-y-6 flex flex-col justify-start">
+              {(() => {
+                const hasGroups = data.honorGroups && data.honorGroups.length > 0;
+                const displayAwards = hasGroups 
+                  ? data.honorGroups!.flatMap(g => g.awards.map(a => ({ ...a, category: g.category })))
+                  : data.awards.filter(a => a.name || a.date || a.level);
                 
-                return (
+                const totalCount = displayAwards.length;
+                const isCompact = totalCount > 5;
+                const isUltraCompact = totalCount > 8;
+
+                if (hasGroups) {
+                  return data.honorGroups!.map((group, groupIdx) => (
+                    <div key={group.id || groupIdx} className="space-y-3">
+                      {group.category && (
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-[2px] w-4 bg-[var(--theme-primary)] opacity-50" />
+                          <span className="text-xs font-black text-[var(--theme-primary)] uppercase tracking-[0.2em]">
+                            {group.category}
+                          </span>
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        {group.awards.filter(a => a.name || a.date || a.level).map((award, i) => (
+                          <div key={`${groupIdx}-${i}`} className="relative">
+                            <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
+                            <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
+                              ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
+                              <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
+                              <div className="relative z-10 flex justify-between items-center">
+                                <div className="flex flex-col min-w-0 flex-1 mr-4">
+                                  <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
+                                    {award.name || '未命名荣誉'}
+                                  </span>
+                                  <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
+                                    {award.date || '年份未知'}
+                                  </span>
+                                </div>
+                                {award.level && (
+                                  <span 
+                                    style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
+                                    className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
+                                      ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
+                                  >
+                                    {award.level}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                }
+
+                return displayAwards.map((award, i) => (
                   <div key={i} className="relative">
-                    <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10`} />
+                    <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
                     <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
                       ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
                       <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
@@ -838,8 +950,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                ));
+              })()}
             </div>
             
             <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-4
@@ -851,7 +963,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             </div>
           </div>
        </div>
-       <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(2 + qualityPages.length).padStart(2, '0')}</div>
+       <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length).padStart(2, '0')}</div>
      </div>
 
      {/* ---------------- CERTIFICATES ---------------- */}
@@ -880,7 +992,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
              ))}
            </div>
          </div>
-         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + pageIndex + 3).padStart(2, '0')}</div>
+         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + pageIndex + 4).padStart(2, '0')}</div>
        </div>
      ))}
 
@@ -940,7 +1052,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
          </div>
          <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
-          {String(qualityPages.length + certPages.length + 3).padStart(2, '0')}
+          {String(qualityPages.length + certPages.length + 4).padStart(2, '0')}
         </div>
       </div>
     )}
@@ -1029,8 +1141,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             </p>
           </div>
        </div>
-       <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + 3).padStart(2, '0')}</div>
-    </div>
+         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + 4).padStart(2, '0')}</div>
+      </div>
 
     {/* ---------------- PAGE: SOCIAL PRACTICE ---------------- */}
     {showSocialPractice && (
@@ -1089,7 +1201,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           </div>
         </div>
         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
-          {String(qualityPages.length + certPages.length + portfolioOffset + 4).padStart(2, '0')}
+          {String(qualityPages.length + certPages.length + portfolioOffset + 5).padStart(2, '0')}
         </div>
       </div>
     )}
@@ -1170,8 +1282,10 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
          </section>
       </div>
-        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 4).padStart(2, '0')}</div>
+      <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
+        {String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 5).padStart(2, '0')}
       </div>
+    </div>
     {/* ---------------- PAGE: RECOMMENDATION (Independent) ---------------- */}
     {data.recommendationLetterImage && (
       <div className={`a4-page ${style.pageClass}`}>
@@ -1190,7 +1304,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             <p>“ 好的老师是孩子成长道路上的引路灯，这份推荐信承载着老师对孩子的期许与肯定。 ”</p>
           </div>
         </div>
-        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 5).padStart(2, '0')}</div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + 6).padStart(2, '0')}</div>
       </div>
     )}
 
