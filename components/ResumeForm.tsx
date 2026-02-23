@@ -1074,28 +1074,55 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
                             <Camera size={14} /> 上传图片
                           </button>
                         </div>
-                        <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-                          {group.images.map((img, imgIndex) => (
-                            <div key={img.id} className="relative group aspect-square rounded-[20px] overflow-hidden border border-white/5 shadow-lg">
-                              <img src={img.url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                              <button 
-                                onClick={() => {
-                                  const newGroups = [...(data.honorGroups || [])];
-                                  newGroups[groupIndex].images = newGroups[groupIndex].images.filter(i => i.id !== img.id);
-                                  onChange({ ...data, honorGroups: newGroups });
-                                }}
-                                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                          {(group.images || []).map((img, imgIndex) => (
+                            <div key={img.id} className="group relative bg-[#2c2c2e] rounded-[24px] overflow-hidden border border-white/5 hover:border-accent/40 transition-all flex flex-col">
+                              {/* 图片预览 */}
+                              <div className="aspect-[4/3] w-full relative overflow-hidden bg-black/20">
+                                <img 
+                                  src={img.url} 
+                                  className="w-full h-full object-contain p-2" 
+                                  alt={img.caption}
+                                />
+                                <button 
+                                  onClick={() => {
+                                    const newGroups = [...(data.honorGroups || [])];
+                                    newGroups[groupIndex].images = newGroups[groupIndex].images.filter(i => i.id !== img.id);
+                                    onChange({ ...data, honorGroups: newGroups });
+                                  }}
+                                  className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 backdrop-blur-sm shadow-lg"
+                                  title="删除图片"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                              
+                              {/* 描述编辑 */}
+                              <div className="p-3 border-t border-white/5">
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-[9px] font-bold text-[var(--theme-label)] opacity-40 uppercase tracking-wider">图片描述</label>
+                                  <input
+                                    value={img.caption || ''}
+                                    onChange={(e) => {
+                                      const newGroups = [...(data.honorGroups || [])];
+                                      newGroups[groupIndex].images[imgIndex].caption = e.target.value;
+                                      onChange({ ...data, honorGroups: newGroups });
+                                    }}
+                                    placeholder="输入描述..."
+                                    className="w-full bg-transparent text-xs font-bold text-white outline-none border-b border-white/10 focus:border-accent py-1 placeholder:text-white/20 transition-colors"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           ))}
                           <button 
                             onClick={() => triggerUpload('honorGroup', group.id)}
-                            className="aspect-square rounded-[20px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center gap-2 text-white/20 hover:border-accent/40 hover:text-accent hover:bg-accent/5 transition-all"
+                            className="aspect-[4/3] rounded-[24px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center gap-3 text-white/20 hover:border-accent/40 hover:text-accent hover:bg-accent/5 transition-all group"
                           >
-                            <Plus size={24} />
-                            <span className="text-[9px] font-bold uppercase">上传图片</span>
+                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                              <Plus size={20} />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">上传图片</span>
                           </button>
                         </div>
                       </div>
