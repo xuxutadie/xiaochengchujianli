@@ -5,7 +5,7 @@ import {
   Trophy, Heart, Palette, Camera, Layout, Settings, BookOpen, 
   MessageSquare, UserCircle, Star, School, Calendar, Upload,
   Frame, Square, Circle, Hexagon, Shield, Loader2, Ticket, Scissors, Smile,
-  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool
+  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool, AlertTriangle
 } from 'lucide-react';
 import { ResumeData, FamilyMember, Award, AvatarFrameType, AvatarShape, HobbyShape } from '../types';
 import { compressImage } from '../utils/imageUtils';
@@ -949,6 +949,160 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
 
               {/* 分类荣誉列表 */}
               <div className="space-y-10 pt-8 border-t border-[var(--theme-border)]">
+                {/* 
+                  全局图片管理 (临时添加以帮助找回图片) 
+                  列出所有可能的图片来源，无论是否在 certificates 中
+                */}
+                <div className="bg-red-500/10 border border-red-500/30 rounded-[24px] p-6 mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
+                      <AlertTriangle size={16} />
+                      图片数据诊断与管理
+                    </h3>
+                    <div className="text-[10px] text-red-400/60 font-mono">
+                      Legacy: {data.certificates?.length || 0} | Groups: {data.honorGroups?.length || 0}
+                    </div>
+                  </div>
+                  
+                  {/* 1. 旧版证书 (Certificates) */}
+                  <div className="space-y-4 mb-6">
+                    <div className="text-[11px] font-bold text-white/60 uppercase tracking-wider border-b border-white/5 pb-2">
+                      1. 未分类证书 (旧版数据 - certificates)
+                    </div>
+                    {(!data.certificates || data.certificates.length === 0) ? (
+                      <div className="text-[10px] text-white/30 italic py-2">无数据 (No legacy certificates found)</div>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-4">
+                        {data.certificates.map((cert, index) => (
+                          <div key={cert.id || index} className="relative group aspect-square bg-black/20 rounded-lg overflow-hidden border border-white/10">
+                            <img src={cert.url} className="w-full h-full object-contain p-2" alt="legacy" />
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => {
+                                  const newCerts = data.certificates.filter((_, i) => i !== index); // Use index as fallback
+                                  onChange({ ...data, certificates: newCerts });
+                                }}
+                                className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                                title="强制删除"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                            <div className="absolute bottom-0 inset-x-0 bg-black/80 p-1">
+                              <input 
+                                value={cert.caption || ''}
+                                onChange={(e) => {
+                                  const newCerts = [...data.certificates];
+                                  newCerts[index].caption = e.target.value;
+                                  onChange({ ...data, certificates: newCerts });
+                                }}
+                                className="w-full bg-transparent text-[9px] text-white outline-none text-center"
+                                placeholder="描述..."
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. 分类荣誉图片 (Honor Groups) */}
+                  <div className="space-y-4">
+                    <div className="text-[11px] font-bold text-white/60 uppercase tracking-wider border-b border-white/5 pb-2">
+                      2. 分类荣誉图片 (Honor Groups)
+                    </div>
+                    {(!data.honorGroups || data.honorGroups.length === 0) ? (
+                      <div className="text-[10px] text-white/30 italic py-2">无分类数据</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {data.honorGroups.map((group, gIdx) => (
+                          <div key={group.id || gIdx} className="bg-white/5 rounded-xl p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-bold text-accent">
+                                分类: {group.category || '(未命名)'}
+                              </span>
+                              <span className="text-[9px] text-white/40">{group.images?.length || 0} 张图片</span>
+                            </div>
+                            <div className="grid grid-cols-6 gap-2">
+                              {(group.images || []).map((img, iIdx) => (
+                                <div key={img.id || iIdx} className="relative group aspect-square bg-black/20 rounded overflow-hidden border border-white/5">
+                                  <img src={img.url} className="w-full h-full object-cover" alt="group-img" />
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                      onClick={() => {
+                                        const newGroups = [...data.honorGroups];
+                                        newGroups[gIdx].images = newGroups[gIdx].images.filter((_, i) => i !== iIdx);
+                                        onChange({ ...data, honorGroups: newGroups });
+                                      }}
+                                      className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
+                                    >
+                                      <Trash2 size={10} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 旧版证书管理 (仅在有旧数据时显示) - 保留原逻辑作为备用 */}
+                {data.certificates && data.certificates.length > 0 && (
+                  <div className="space-y-6 pb-8 border-b border-[var(--theme-border)]">
+                    <div className="flex items-center justify-between ml-1">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">未分类证书 (旧版)</label>
+                        <span className="text-[9px] text-accent font-bold uppercase">Uncategorized / Legacy Certificates</span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                      {data.certificates.map((cert, index) => (
+                        <div key={cert.id} className="group relative bg-[#2c2c2e] rounded-[24px] overflow-hidden border border-white/5 hover:border-accent/40 transition-all flex flex-col">
+                          {/* 图片预览 */}
+                          <div className="aspect-[4/3] w-full relative overflow-hidden bg-black/20">
+                            <img 
+                              src={cert.url} 
+                              className="w-full h-full object-contain p-2" 
+                              alt={cert.caption}
+                            />
+                            <button 
+                              onClick={() => {
+                                const newCerts = data.certificates.filter(c => c.id !== cert.id);
+                                onChange({ ...data, certificates: newCerts });
+                              }}
+                              className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center bg-red-500/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500 backdrop-blur-sm shadow-lg"
+                              title="删除图片"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          
+                          {/* 描述编辑 */}
+                          <div className="p-3 border-t border-white/5">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[9px] font-bold text-[var(--theme-label)] opacity-40 uppercase tracking-wider">图片描述</label>
+                              <input
+                                value={cert.caption || ''}
+                                onChange={(e) => {
+                                  const newCerts = [...data.certificates];
+                                  newCerts[index].caption = e.target.value;
+                                  onChange({ ...data, certificates: newCerts });
+                                }}
+                                placeholder="输入描述..."
+                                className="w-full bg-transparent text-xs font-bold text-white outline-none border-b border-white/10 focus:border-accent py-1 placeholder:text-white/20 transition-colors"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between ml-1">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">荣誉分类汇总</label>
