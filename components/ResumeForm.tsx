@@ -171,6 +171,38 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
     fileInputRef.current?.click();
   };
 
+  const clearLargeImages = () => {
+    if (confirm('确定要清除所有 Base64 格式的大图吗？这将释放本地存储空间，且不会影响已经上传到服务器的图片。')) {
+      const isBase64 = (url: string) => url.startsWith('data:image');
+      
+      const newData = { ...data };
+      
+      // 清理各个部分的图片
+      if (newData.basicInfo.avatarUrl && isBase64(newData.basicInfo.avatarUrl)) newData.basicInfo.avatarUrl = '';
+      if (newData.cover.backgroundImage && isBase64(newData.cover.backgroundImage)) newData.cover.backgroundImage = '';
+      if (newData.pageBackground && isBase64(newData.pageBackground)) newData.pageBackground = '';
+      if (newData.recommendationLetterImage && isBase64(newData.recommendationLetterImage)) newData.recommendationLetterImage = '';
+      if (newData.coverLetterImage && isBase64(newData.coverLetterImage)) newData.coverLetterImage = '';
+      if (newData.backCover.backgroundImage && isBase64(newData.backCover.backgroundImage)) newData.backCover.backgroundImage = '';
+      
+      newData.qualityReports = newData.qualityReports.filter(img => !isBase64(img.url));
+      newData.certificates = newData.certificates.filter(img => !isBase64(img.url));
+      newData.hobbies.images = newData.hobbies.images.filter(img => !isBase64(img.url));
+      newData.socialPractice.images = newData.socialPractice.images.filter(img => !isBase64(img.url));
+      newData.portfolio.images = newData.portfolio.images.filter(img => !isBase64(img.url));
+      
+      if (newData.honorGroups) {
+        newData.honorGroups = newData.honorGroups.map(group => ({
+          ...group,
+          images: group.images.filter(img => !isBase64(img.url))
+        }));
+      }
+      
+      onChange(newData);
+      alert('清理完成！已释放本地存储空间。');
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadType) return;
@@ -187,7 +219,23 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
 
         // 2. 尝试上传到后端服务器 (Zeabur 50G 存储)
         try {
-          const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+          // 优先从环境变量获取，如果获取不到则使用当前 window.location 的域名
+          let backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+          
+          if (!backendUrl) {
+            // 如果没有配置后端地址，尝试根据当前访问地址推断（适用于 Zeabur 部署）
+            const host = window.location.host;
+            if (host.includes('zeabur.app')) {
+              // 假设后端和前端在同一个项目下，通常可以通过替换子域名或使用特定域名
+              // 这里我们保持原样或提示用户配置环境变量
+              console.warn('⚠️ 未配置 VITE_BACKEND_URL，尝试使用本地地址');
+              backendUrl = 'http://localhost:3000';
+            } else {
+              backendUrl = 'http://localhost:3000';
+            }
+          }
+
+          backendUrl = backendUrl.replace(/\/$/, '');
           
           // 将 base64 转回 Blob 进行上传
           const res = await fetch(processedBase64);
@@ -332,7 +380,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
               <p className="text-red-500/70 text-xs leading-relaxed font-bold">
                 浏览器本地存储(5MB)已达到上限，当前更改无法自动保存。
                 <br />
-                建议：1. 删除一些大图 2. 点击右侧“重置”重新开始 3. 尝试刷新页面（注意：未保存的更改会丢失）。
+                建议：1. <button onClick={clearLargeImages} className="underline hover:text-red-600 font-black">点击此处一键清理本地大图</button> 2. 删除不重要的图片 3. 尝试刷新页面。
               </p>
             </div>
           </div>
