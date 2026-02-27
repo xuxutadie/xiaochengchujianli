@@ -3,9 +3,36 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const axios = require('axios');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs-extra');
 require('dotenv').config();
 
 const app = express();
+
+// Ensure uploads directory exists
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+fs.ensureDirSync(UPLOADS_DIR);
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(UPLOADS_DIR));
+
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -411,6 +438,24 @@ app.post('/api/ai/polish', async (req, res) => {
     const errorMsg = err.response?.data?.error?.message || err.message;
     res.status(500).json({ success: false, message: `AI 编辑失败: ${errorMsg}` });
   }
+});
+
+// Image Upload endpoint
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: '没有上传文件' });
+  }
+
+  // Build the absolute URL for the uploaded image
+  // In production, Zeabur handles the domain. 
+  // We use relative paths in the frontend and the browser resolves them based on the API base URL.
+  const imageUrl = `/uploads/${req.file.filename}`;
+  
+  res.json({ 
+    success: true, 
+    url: imageUrl,
+    filename: req.file.filename
+  });
 });
 
 const PORT = process.env.PORT || 3000;

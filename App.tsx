@@ -657,7 +657,7 @@ function App() {
           onLayoutChange={(l) => setData({ ...data, layout: l })}
           darkMode={data.darkMode || false}
         />
-        <ResumeForm data={data} onChange={setData} />
+        <ResumeForm data={data} onChange={setData} saveError={saveError} />
       </div>
     </>
   );
@@ -710,9 +710,14 @@ function App() {
               <h2 className={`text-lg font-black tracking-tight text-[var(--theme-label)]`}>预览实时更新</h2>
               <div className="flex items-center gap-2">
                 {saveError ? (
-                  <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
-                    <AlertCircle size={10} /> 存储空间已满
-                  </span>
+                  <div className="group relative flex items-center gap-1">
+                    <span className="text-red-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                      <AlertCircle size={10} /> 存储空间已满
+                    </span>
+                    <div className="absolute left-0 top-full mt-2 w-48 p-2 bg-red-500 text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl leading-relaxed">
+                      浏览器本地存储空间(5MB)已用尽。建议删除一些不重要的图片，或尝试刷新页面后重新上传。
+                    </div>
+                  </div>
                 ) : (
                   <span className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> 已自动保存

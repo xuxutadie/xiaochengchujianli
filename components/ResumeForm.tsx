@@ -14,6 +14,7 @@ import { polishContent, generateClosingMessage } from '../services/geminiService
 interface ResumeFormProps {
   data: ResumeData;
   onChange: (data: ResumeData) => void;
+  saveError?: boolean;
 }
 
 const AVATAR_SHAPES = [
@@ -83,7 +84,7 @@ const SectionHeader = ({ icon: Icon, title, description, isOpen, onToggle, onAiA
   </div>
 );
 
-const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
+const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) => {
   const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
   const [isPolishing, setIsPolishing] = useState<Record<string, boolean>>({});
   const [aiEditConfig, setAiEditConfig] = useState<{
@@ -176,36 +177,66 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
 
     setIsCompressing(true);
     try {
+      // 1. 先进行本地压缩
       const reader = new FileReader();
       reader.onload = async () => {
         const base64Image = reader.result as string;
-        // 直接使用 compressImage 处理原图，不进行手动裁剪
-        const processed = await compressImage(base64Image, 2560, 2560, 0.98);
+        const processedBase64 = await compressImage(base64Image, 1600, 1600, 0.85);
         
+        let finalUrl = processedBase64;
+
+        // 2. 尝试上传到后端服务器 (Zeabur 50G 存储)
+        try {
+          const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+          
+          // 将 base64 转回 Blob 进行上传
+          const res = await fetch(processedBase64);
+          const blob = await res.blob();
+          const formData = new FormData();
+          formData.append('image', blob, 'image.jpg');
+
+          const uploadRes = await fetch(`${backendUrl}/api/upload`, {
+            method: 'POST',
+            body: formData
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success) {
+              // 使用后端返回的相对路径，加上后端域名
+              finalUrl = `${backendUrl}${uploadData.url}`;
+              console.log('✅ 图片已成功存储至服务器:', finalUrl);
+            }
+          }
+        } catch (uploadErr) {
+          console.warn('⚠️ 后端上传失败，回退到 Base64 存储:', uploadErr);
+        }
+
+        // 3. 更新数据
         if (uploadType === 'avatar') {
-          updateNested('basicInfo', 'avatarUrl', processed);
+          updateNested('basicInfo', 'avatarUrl', finalUrl);
         } else if (uploadType === 'cover') {
-          updateNested('cover', 'backgroundImage', processed);
+          updateNested('cover', 'backgroundImage', finalUrl);
         } else if (uploadType === 'pageBackground') {
-          onChange({ ...data, pageBackground: processed });
+          onChange({ ...data, pageBackground: finalUrl });
         } else if (uploadType === 'quality') {
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '素质报告'
           };
           onChange({ ...data, qualityReports: [...data.qualityReports, newItem] });
         } else if (uploadType === 'awards') {
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '证书名称'
           };
           onChange({ ...data, certificates: [...data.certificates, newItem] });
         } else if (uploadType === 'honorGroup' && uploadingGroupId) {
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '奖状/图片'
           };
           const newGroups = data.honorGroups?.map(group => {
@@ -224,17 +255,17 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           }
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '爱好照片'
           };
           const newImages = [...data.hobbies.images, newItem];
           updateNested('hobbies', 'images', newImages);
         } else if (uploadType === 'recommendation') {
-          onChange({ ...data, recommendationLetterImage: processed });
+          onChange({ ...data, recommendationLetterImage: finalUrl });
         } else if (uploadType === 'coverLetter') {
-          onChange({ ...data, coverLetterImage: processed });
+          onChange({ ...data, coverLetterImage: finalUrl });
         } else if (uploadType === 'backCover') {
-          updateNested('backCover', 'backgroundImage', processed);
+          updateNested('backCover', 'backgroundImage', finalUrl);
         } else if (uploadType === 'socialPractice') {
           if (data.socialPractice.images.length >= 4) {
             alert('最多只能上传 4 张社会实践照片');
@@ -243,7 +274,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           }
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '社会实践'
           };
           const newImages = [...data.socialPractice.images, newItem];
@@ -256,7 +287,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           }
           const newItem = {
             id: Date.now().toString(),
-            url: processed,
+            url: finalUrl,
             caption: '作品名称'
           };
           const newImages = [...data.portfolio.images, newItem];
@@ -289,6 +320,23 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange }) => {
           accept="image/*"
           onChange={handleFileChange}
         />
+
+        {/* 存储空间已满警告 */}
+        {saveError && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-[32px] p-6 mb-8 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20">
+              <AlertTriangle className="text-white" size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-red-500 font-black text-sm uppercase tracking-wider mb-1">存储空间已满 (Storage Full)</h3>
+              <p className="text-red-500/70 text-xs leading-relaxed font-bold">
+                浏览器本地存储(5MB)已达到上限，当前更改无法自动保存。
+                <br />
+                建议：1. 删除一些大图 2. 点击右侧“重置”重新开始 3. 尝试刷新页面（注意：未保存的更改会丢失）。
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 压缩状态 */}
         {isCompressing && (
