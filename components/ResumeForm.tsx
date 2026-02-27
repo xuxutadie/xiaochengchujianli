@@ -171,9 +171,82 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
     fileInputRef.current?.click();
   };
 
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  const migrateImagesToServer = async () => {
+    if (isMigrating) return;
+    setIsMigrating(true);
+    
+    try {
+      const isBase64 = (url: string) => url?.startsWith('data:image');
+      const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+      
+      const uploadOne = async (base64: string): Promise<string> => {
+        try {
+          const res = await fetch(base64);
+          const blob = await res.blob();
+          const formData = new FormData();
+          formData.append('image', blob, 'image.jpg');
+          const uploadRes = await fetch(`${backendUrl}/api/upload`, {
+            method: 'POST',
+            body: formData
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success) return `${backendUrl}${uploadData.url}`;
+          }
+        } catch (e) {
+          console.error('Migration failed for image:', e);
+        }
+        return base64; // Fallback to original if failed
+      };
+
+      const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+      let count = 0;
+
+      // Helper to migrate array of images
+      const migrateImageArray = async (images: any[]) => {
+        for (let i = 0; i < images.length; i++) {
+          if (isBase64(images[i].url)) {
+            images[i].url = await uploadOne(images[i].url);
+            count++;
+          }
+        }
+      };
+
+      // Traverse and migrate all fields
+      if (isBase64(newData.basicInfo.avatarUrl)) { newData.basicInfo.avatarUrl = await uploadOne(newData.basicInfo.avatarUrl); count++; }
+      if (isBase64(newData.cover.backgroundImage)) { newData.cover.backgroundImage = await uploadOne(newData.cover.backgroundImage); count++; }
+      if (isBase64(newData.pageBackground)) { newData.pageBackground = await uploadOne(newData.pageBackground); count++; }
+      if (isBase64(newData.recommendationLetterImage)) { newData.recommendationLetterImage = await uploadOne(newData.recommendationLetterImage); count++; }
+      if (isBase64(newData.coverLetterImage)) { newData.coverLetterImage = await uploadOne(newData.coverLetterImage); count++; }
+      if (isBase64(newData.backCover.backgroundImage)) { newData.backCover.backgroundImage = await uploadOne(newData.backCover.backgroundImage); count++; }
+
+      await migrateImageArray(newData.qualityReports);
+      await migrateImageArray(newData.certificates);
+      await migrateImageArray(newData.hobbies.images);
+      await migrateImageArray(newData.socialPractice.images);
+      await migrateImageArray(newData.portfolio.images);
+
+      if (newData.honorGroups) {
+        for (const group of newData.honorGroups) {
+          await migrateImageArray(group.images);
+        }
+      }
+
+      onChange(newData);
+      alert(`成功迁移了 ${count} 张图片到服务器，本地存储空间已释放！`);
+    } catch (err) {
+      console.error('Global migration failed:', err);
+      alert('迁移失败，请检查网络或后端配置。');
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   const clearLargeImages = () => {
-    if (confirm('确定要清除所有 Base64 格式的大图吗？这将释放本地存储空间，且不会影响已经上传到服务器的图片。')) {
-      const isBase64 = (url: string) => url.startsWith('data:image');
+    if (confirm('【警告】此操作将删除所有尚未同步到服务器的图片（Base64 格式）。如果您之前上传的图片还没来得及同步，它们将从简历中消失。确定要继续吗？')) {
+      const isBase64 = (url: string) => url?.startsWith('data:image');
       
       const newData = { ...data };
       
@@ -380,7 +453,9 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
               <p className="text-red-500/70 text-xs leading-relaxed font-bold">
                 浏览器本地存储(5MB)已达到上限，当前更改无法自动保存。
                 <br />
-                建议：1. <button onClick={clearLargeImages} className="underline hover:text-red-600 font-black">点击此处一键清理本地大图</button> 2. 删除不重要的图片 3. 尝试刷新页面。
+                建议：1. <button onClick={migrateImagesToServer} disabled={isMigrating} className="underline hover:text-red-600 font-black">{isMigrating ? '正在同步图片...' : '点击此处同步旧图到服务器'}</button>（推荐：不丢失数据） 
+                <br />
+                2. <button onClick={clearLargeImages} className="text-red-500/50 hover:text-red-600 underline ml-2">清除本地未同步大图</button>（慎点：将永久删除未上传图片）
               </p>
             </div>
           </div>
