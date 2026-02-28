@@ -105,6 +105,16 @@ const initDb = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+
+    // 新增：简历数据表，用于跨会话存储
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS resume_data (
+        id SERIAL PRIMARY KEY,
+        code TEXT UNIQUE NOT NULL REFERENCES verification_codes(code) ON DELETE CASCADE,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
     client.release();
     console.log('✅ 数据库表初始化完成');
   } catch (err) {
@@ -148,6 +158,57 @@ app.post('/api/verify', async (req, res) => {
   } catch (err) {
     console.error('Verify error:', err);
     res.status(500).json({ success: false, message: '服务器内部错误' });
+  }
+});
+
+// --- 新增：简历数据持久化接口 ---
+
+// 1. 保存/更新简历数据
+app.post('/api/resume/save', async (req, res) => {
+  const { code, data } = req.body;
+
+  if (!code || !data) {
+    return res.status(400).json({ success: false, message: '参数缺失' });
+  }
+
+  try {
+    // 验证验证码是否存在
+    const codeCheck = await pool.query('SELECT * FROM verification_codes WHERE code = $1', [code]);
+    if (codeCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '无效的验证码' });
+    }
+
+    // 使用 ON CONFLICT 更新或插入
+    await pool.query(
+      `INSERT INTO resume_data (code, data, updated_at) 
+       VALUES ($1, $2, NOW()) 
+       ON CONFLICT (code) 
+       DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()`,
+      [code, JSON.stringify(data)]
+    );
+
+    res.json({ success: true, message: '数据已自动同步到服务器' });
+  } catch (err) {
+    console.error('Save resume error:', err);
+    res.status(500).json({ success: false, message: '保存失败: ' + err.message });
+  }
+});
+
+// 2. 加载简历数据
+app.get('/api/resume/load/:code', async (req, res) => {
+  const { code } = req.params;
+
+  try {
+    const result = await pool.query('SELECT data FROM resume_data WHERE code = $1', [code]);
+    
+    if (result.rows.length === 0) {
+      return res.json({ success: true, data: null, message: '未找到存档数据' });
+    }
+
+    res.json({ success: true, data: result.rows[0].data });
+  } catch (err) {
+    console.error('Load resume error:', err);
+    res.status(500).json({ success: false, message: '加载失败' });
   }
 });
 

@@ -205,14 +205,36 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     ...(data.recommendationLetterImage ? [{ title: '推荐信', subtitle: 'Letter', page: 5 + qualityPages.length + honorPagesCount + certPages.length + portfolioOffset + socialPracticeOffset, icon: <Mail size={18} /> }] : []),
   ];
 
+  const SafeImage = ({ src, className, style }: { src?: string, className?: string, style?: React.CSSProperties }) => {
+    const [error, setError] = useState(false);
+    if (!src) return null;
+    if (error) {
+      return (
+        <div className={`flex flex-col items-center justify-center bg-red-500/5 text-red-500/40 p-4 text-center ${className}`} style={style}>
+          <AlertTriangle size={24} className="mb-2 opacity-20" />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">图片加载失败</span>
+          <span className="text-[8px] opacity-50 mt-1">请尝试重新上传或同步</span>
+        </div>
+      );
+    }
+    return (
+      <img 
+        src={src} 
+        className={className} 
+        style={style} 
+        onError={() => setError(true)} 
+        loading="lazy"
+      />
+    );
+  };
+
   const PageBackground = () => {
     if (!data.pageBackground) return null;
     return (
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden print:z-0">
-        <img 
+        <SafeImage 
           src={data.pageBackground} 
           className="absolute inset-0 w-full h-full object-cover opacity-[0.65]" 
-          alt=""
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
@@ -340,12 +362,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     const frameStyles: Record<AvatarFrameType, React.ReactNode> = {
       [AvatarFrameType.None]: (
         <AvatarWrapper>
-          <img src={url} className="w-full h-full object-cover object-top" />
+          <SafeImage src={url} className="w-full h-full object-cover object-top" />
         </AvatarWrapper>
       ),
       [AvatarFrameType.Classic]: (
         <AvatarWrapper className="border-[8px] border-[var(--theme-card)] ring-4 ring-[var(--theme-primary)] ring-opacity-20">
-          <img src={url} className="w-full h-full object-cover object-top" />
+          <SafeImage src={url} className="w-full h-full object-cover object-top" />
         </AvatarWrapper>
       ),
       [AvatarFrameType.Wreath]: (
@@ -377,7 +399,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               </svg>
            </div>
            <AvatarWrapper className="border-[8px] border-[var(--theme-card)] relative z-10 ring-2 ring-[var(--theme-primary)] ring-offset-2 ring-offset-[var(--theme-card)]">
-             <img src={url} className="w-full h-full object-cover object-top" />
+             <SafeImage src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
         </div>
       ),
@@ -395,7 +417,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
            
            <AvatarWrapper className="border-4 border-[var(--theme-card)] relative z-20 ring-4 ring-[var(--theme-primary)]">
-             <img src={url} className="w-full h-full object-cover object-top" />
+             <SafeImage src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
 
            {[...Array(3)].map((_, i) => (
@@ -444,7 +466,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
            </div>
            
            <AvatarWrapper className="border-[10px] border-[var(--theme-card)] relative z-10 ring-4 ring-[var(--theme-primary)] ring-opacity-30">
-             <img src={url} className="w-full h-full object-cover object-top" />
+             <SafeImage src={url} className="w-full h-full object-cover object-top" />
            </AvatarWrapper>
 
            <div className="absolute -top-4 -right-4 z-20">
@@ -469,7 +491,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <div className="absolute inset-[-15%] border-[12px] border-[var(--theme-primary)] opacity-40 blur-[2px]" style={{ ...shapeStyle, clipPath: shape === AvatarShape.Hexagon || shape === AvatarShape.Shield ? (shapeStyle.clipPath as string) : 'polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%)' }}></div>
           <div className="absolute inset-[-10%] border-[8px] border-[var(--theme-readable-primary)] opacity-30" style={{ ...shapeStyle, transform: 'rotate(-2deg)' }}></div>
           <AvatarWrapper className="border-[12px] border-[var(--theme-card)] relative z-10 ring-4 ring-[var(--theme-secondary)] ring-offset-4 ring-offset-[var(--theme-card)]">
-            <img src={url} className="w-full h-full object-cover" />
+            <SafeImage src={url} className="w-full h-full object-cover" />
           </AvatarWrapper>
           <div className="absolute -bottom-6 -right-6 z-20 bg-[var(--theme-card)] p-2 rounded-2xl shadow-lg rotate-12">
             <Palette size={32} className="text-[var(--theme-primary)]" />
@@ -480,7 +502,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         <div className="relative">
           <div className="absolute inset-[-12%] bg-[var(--theme-primary)] opacity-20" style={{ ...shapeStyle, clipPath: 'polygon(0% 10%, 5% 5%, 10% 0%, 15% 5%, 20% 10%, 25% 5%, 30% 0%, 35% 5%, 40% 10%, 45% 5%, 50% 0%, 55% 5%, 60% 10%, 65% 5%, 70% 0%, 75% 5%, 80% 10%, 85% 5%, 90% 0%, 95% 5%, 100% 10%, 95% 15%, 90% 20%, 95% 25%, 100% 30%, 95% 35%, 90% 40%, 95% 45%, 100% 50%, 95% 55%, 90% 60%, 95% 65%, 100% 70%, 95% 75%, 90% 80%, 95% 85%, 100% 90%, 95% 95%, 90% 100%, 85% 95%, 80% 90%, 75% 95%, 70% 100%, 65% 95%, 60% 90%, 55% 95%, 50% 100%, 45% 95%, 40% 90%, 35% 95%, 30% 100%, 25% 95%, 20% 90%, 15% 95%, 10% 100%, 5% 95%, 0% 90%, 5% 85%, 10% 80%, 5% 75%, 0% 70%, 5% 65%, 10% 60%, 5% 55%, 0% 50%, 5% 45%, 10% 40%, 5% 35%, 0% 30%, 5% 25%, 10% 20%, 5% 15%)' }}></div>
           <AvatarWrapper className="border-[12px] border-[var(--theme-card)] relative z-10 ring-4 ring-[var(--theme-readable-primary)] ring-opacity-10">
-            <img src={url} className="w-full h-full object-cover" />
+            <SafeImage src={url} className="w-full h-full object-cover" />
           </AvatarWrapper>
           <div className="absolute -top-4 -left-4 z-20 bg-[var(--theme-primary)] text-white px-3 py-1 text-[10px] font-black tracking-widest uppercase rounded-sm shadow-md -rotate-12">
             POSTAGE PAID
@@ -492,7 +514,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <div className="absolute inset-[-15%] bg-[var(--theme-card)] shadow-inner border-4 border-dashed border-[var(--theme-primary)] opacity-60" style={shapeStyle}></div>
           <div className="absolute inset-[-8%] bg-[var(--theme-secondary)] shadow-lg" style={{ ...shapeStyle, transform: 'rotate(3deg)' }}></div>
           <AvatarWrapper className="border-[6px] border-[var(--theme-card)] relative z-10">
-            <img src={url} className="w-full h-full object-cover" />
+            <SafeImage src={url} className="w-full h-full object-cover" />
           </AvatarWrapper>
           <div className="absolute top-0 right-0 z-20 p-2 bg-[var(--theme-card)] rounded-full shadow-md -translate-y-1/2 translate-x-1/2">
             <Scissors size={24} className="text-[var(--theme-readable-primary)]" />
@@ -507,7 +529,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             </svg>
           </div>
           <AvatarWrapper className="border-[12px] border-[var(--theme-card)] relative z-10 ring-[6px] ring-[var(--theme-readable-primary)] ring-opacity-5">
-            <img src={url} className="w-full h-full object-cover" />
+            <SafeImage src={url} className="w-full h-full object-cover" />
           </AvatarWrapper>
           <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 z-20 bg-[var(--theme-card)] px-4 py-1.5 rounded-full shadow-lg border-2 border-[var(--theme-primary)] flex items-center gap-2">
             <Smile size={18} className="text-[var(--theme-primary)]" />
@@ -542,10 +564,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           // Modern Cover
           <div className="relative w-full h-full flex flex-col">
             <div className="absolute top-0 left-0 w-full h-[75%] overflow-hidden">
-              <img 
+              <SafeImage 
                 src={data.cover.backgroundImage} 
                 className="w-full h-full object-cover" 
-                alt=""
               />
               <div className="absolute inset-0 bg-black/10"></div>
             </div>
@@ -638,7 +659,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           // Classic Cover (Original)
           <>
             <div className="absolute top-0 left-0 w-full h-[65%] overflow-hidden z-0">
-              <img 
+              <SafeImage 
                 src={data.cover.backgroundImage} 
                 className="absolute inset-0 w-full h-full object-cover opacity-90" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -857,11 +878,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                {pageItems.map((item, i) => (
                  <div key={item.id || i} className={`w-full ${style.compactImageContainerClass} flex flex-col shadow-xl flex-1 min-h-0 overflow-hidden !max-h-[380px]`}>
                    <div className="flex-1 bg-[var(--theme-secondary)]/20 border-b border-[var(--theme-secondary)] overflow-hidden flex items-center justify-center">
-                     <img 
-                       src={item.url} 
-                       className="max-w-full max-h-full object-contain" 
-                       style={{ width: 'auto', height: 'auto', objectFit: 'contain' }}
-                     />
+                   <SafeImage 
+                     src={item.url} 
+                     className="max-w-full max-h-full object-contain" 
+                     style={{ width: 'auto', height: 'auto', objectFit: 'contain' }}
+                   />
                    </div>
                    {item.caption && (
                     <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2.5 flex items-center justify-center shrink-0">
@@ -1032,7 +1053,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             {pageCerts.map((item, i) => (
                <div key={i} className={`${style.imageContainerClass} flex flex-col min-h-0 overflow-hidden !max-h-[350px]`}>
                  <div className="flex-1 bg-[var(--theme-secondary)]/30 flex items-center justify-center p-2 min-h-0">
-                   <img src={item.url} className="max-w-full max-h-full object-contain shadow-sm" style={{ width: 'auto', height: 'auto' }} />
+                   <SafeImage src={item.url} className="max-w-full max-h-full object-contain shadow-sm" style={{ width: 'auto', height: 'auto' }} />
                  </div>
                  {item.caption && (
                     <div className="text-center text-[10px] font-black text-[var(--theme-readable-primary)] bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] py-2 px-4 shrink-0 border-t border-[var(--theme-primary)]/10">
@@ -1081,7 +1102,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                  {data.portfolio.images.slice(0, 8).map((item, i) => (
                    <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[220px]`}>
                      <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden flex items-center justify-center">
-                      <img src={item.url} className="max-w-full max-h-full object-contain" />
+                      <SafeImage src={item.url} className="max-w-full max-h-full object-contain" />
                     </div>
                      {item.caption && (
                        <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
@@ -1155,7 +1176,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                    return (
                      <div key={i} className={`relative group ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'} overflow-hidden`}>
                        <div className={`w-full h-full overflow-hidden border-[5px] border-[var(--theme-primary)] ${shapeClass} transition-all relative shadow-lg shadow-[var(--theme-shadow)]`}>
-                         <img src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} style={{ minWidth: '100%', minHeight: '100%' }} />
+                         <SafeImage src={item.url} className={`w-full h-full object-cover ${data.hobbies.imageShape === HobbyShape.Diamond ? '-rotate-45 scale-150' : ''}`} style={{ minWidth: '100%', minHeight: '100%' }} />
                          {item.caption && (
                            <div className="absolute bottom-0 left-0 right-0 bg-[var(--theme-readable-primary)] p-1 z-20">
                              <p className="text-white text-[9px] font-black text-center truncate px-2 drop-shadow-md">{item.caption}</p>
@@ -1229,9 +1250,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               <div className="grid grid-cols-2 gap-4 content-start min-h-0 overflow-hidden">
                 {data.socialPractice.images.slice(0, 4).map((item, i) => (
                   <div key={i} className={`${style.imageContainerClass} flex flex-col shadow-xl min-h-0 overflow-hidden !max-h-[300px]`}>
-                    <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden flex items-center justify-center">
-                      <img src={item.url} className="max-w-full max-h-full object-contain" />
-                    </div>
+                   <div className="flex-1 bg-[var(--theme-secondary)]/20 overflow-hidden flex items-center justify-center">
+                     <SafeImage src={item.url} className="max-w-full max-h-full object-contain" />
+                   </div>
                     {item.caption && (
                       <div className="bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] p-2 flex items-center justify-center shrink-0">
                         <p className="text-[10px] font-black text-[var(--theme-readable-primary)] leading-tight text-center tracking-widest">
@@ -1349,7 +1370,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         </div>
         <div className={style.contentPanelClass}>
           <div className={`flex-1 ${style.imageContainerClass} bg-[var(--theme-card)] shadow-xl flex items-center justify-center overflow-hidden`}>
-             <img src={data.recommendationLetterImage} className="max-w-full max-h-full object-contain p-4" />
+             <SafeImage src={data.recommendationLetterImage} className="max-w-full max-h-full object-contain p-4" />
           </div>
           <div className="mt-8 p-6 bg-[var(--theme-secondary)] rounded-2xl border-l-4 border-[var(--theme-primary)] italic text-[var(--theme-readable-primary)]/70">
             <p>“ 好的老师是孩子成长道路上的引路灯，这份推荐信承载着老师对孩子的期许与肯定。 ”</p>
@@ -1367,7 +1388,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         // Modern Back Cover
         <div className="relative w-full h-full flex flex-col items-center justify-center bg-[var(--theme-primary)]">
           <div className="absolute top-0 left-0 w-full h-full opacity-10">
-            <img src={data.cover.backgroundImage} className="w-full h-full object-cover grayscale" />
+            <SafeImage src={data.cover.backgroundImage} className="w-full h-full object-cover grayscale" />
           </div>
           <div className="relative z-10 w-[80%] aspect-square border-8 border-white p-12 flex flex-col items-center justify-center text-white">
              <div className="mb-10">
@@ -1437,7 +1458,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         // Classic Back Cover (Original)
         <>
           <div className="absolute inset-0 overflow-hidden z-0">
-            <img 
+            <SafeImage 
               src={data.cover.backgroundImage} 
               className="absolute inset-0 w-full h-full object-cover opacity-90" 
             />

@@ -410,23 +410,16 @@ function App() {
   const [isResizing, setIsResizing] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
-  // Compute theme variables
-  const themeVars = {
-          '--theme-primary': data.themeColor,
-          '--theme-readable-primary': '#ffffff',
-          '--theme-label': '#ffffff', 
-          '--theme-border': 'rgba(255,255,255,0.06)',
-          '--theme-card': '#1c1c1e',
-          '--theme-input': '#2c2c2e',
-          '--theme-surface': '#000000',
-          '--theme-accent': '#D9F217',
-          '--theme-secondary': '#D9F217', 
-        } as React.CSSProperties;
-  
-  // Ref for the scaling container (sizing logic)
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const getBackendUrl = () => {
+    let url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+    if (url && !url.startsWith('http')) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/$/, '');
+  };
 
   // 1. Load from LocalStorage on Mount
   useEffect(() => {
@@ -442,59 +435,97 @@ function App() {
     const saved = localStorage.getItem(STORAGE_KEY);
     const savedWidth = localStorage.getItem('sidebar-width');
     if (savedWidth) setSidebarWidth(parseInt(savedWidth));
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const migrated = migrateData(parsed);
-        setData(migrated);
-      } catch (e) {
-        console.error("Failed to load saved resume", e);
+    
+    const initData = async () => {
+      // 首先尝试从本地加载
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const migrated = migrateData(parsed);
+          setData(migrated);
+          setIsLoaded(true);
+
+          // 如果本地有验证码，尝试从服务器拉取最新数据（实现跨设备同步）
+          if (migrated.verificationCode) {
+            try {
+              const backendUrl = getBackendUrl();
+              const res = await fetch(`${backendUrl}/api/resume/load/${migrated.verificationCode}`);
+              const result = await res.json();
+              if (result.success && result.data) {
+                console.log('🔄 已从服务器同步最新存档');
+                setData(migrateData(result.data));
+              }
+            } catch (e) {
+              console.warn('无法从服务器加载备份', e);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load saved resume", e);
+          setIsLoaded(true);
+        }
+      } else {
+        setIsLoaded(true);
       }
-    }
-    setIsLoaded(true);
+    };
+
+    initData();
   }, []);
 
-  // 2. Save to LocalStorage on Change
+  // 2. 自动保存逻辑：本地 + 远程
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // A. 总是保存到本地 LocalStorage (作为第一层缓存)
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setSaveError(false);
+    } catch (e) {
+      console.warn("Storage Quota Exceeded:", e);
+      setSaveError(true);
+    }
+
+    // B. 如果有验证码，自动同步到远程数据库 (作为第二层持久化)
+    if (data.verificationCode) {
+      const syncTimer = setTimeout(async () => {
+        setIsSyncing(true);
+        try {
+          const backendUrl = getBackendUrl();
+          const res = await fetch(`${backendUrl}/api/resume/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code: data.verificationCode,
+              data: data
+            })
+          });
+          if (res.ok) {
+            setLastSyncTime(new Date());
+            setSaveError(false);
+          }
+        } catch (e) {
+          console.error('自动同步失败', e);
+        } finally {
+          setIsSyncing(false);
+        }
+      }, 2000); // 防抖：停止修改 2 秒后同步
+
+      return () => clearTimeout(syncTimer);
+    }
+  }, [data, isLoaded]);
+
+  // 3. 后端连接检测
   useEffect(() => {
     const checkBackend = async () => {
-      let backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-      
-      // 处理域名，确保以 https:// 开头
-      if (backendUrl && !backendUrl.startsWith('http')) {
-        backendUrl = `https://${backendUrl}`;
-      }
-      
-      // 去掉末尾的斜杠
-      backendUrl = backendUrl.replace(/\/$/, '');
-      
-      console.log('🔍 正在检测后端连接...', backendUrl);
+      const backendUrl = getBackendUrl();
       try {
         const res = await fetch(`${backendUrl}/api/health`);
-        if (res.ok) {
-          console.log('✅ 后端连接成功！域名：', backendUrl);
-        } else {
-          console.error('❌ 后端返回异常状态码:', res.status, '请检查后端服务是否正常运行');
-        }
+        if (res.ok) console.log('✅ 后端连接成功');
       } catch (err) {
-        console.error('❌ 无法连接到后端。当前配置域名:', backendUrl, '错误原因:', err.message);
-        console.warn('💡 提示：请确保在 Zeabur 前端设置中 VITE_BACKEND_URL 已更新为新的后端域名');
+        console.warn('❌ 无法连接到后端');
       }
     };
     checkBackend();
   }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        setSaveError(false);
-      } catch (e) {
-        // Silently fail but update UI state, don't crash
-        console.warn("Storage Quota Exceeded:", e);
-        setSaveError(true);
-      }
-    }
-  }, [data, isLoaded]);
 
   // Resize Observer for Scaling
   useEffect(() => {
@@ -718,9 +749,14 @@ function App() {
                       浏览器本地存储空间(5MB)已用尽。建议删除一些不重要的图片，或尝试刷新页面后重新上传。
                     </div>
                   </div>
+                ) : isSyncing ? (
+                  <span className="text-amber-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                    <Loader2 size={10} className="animate-spin" /> 正在同步到服务器...
+                  </span>
                 ) : (
                   <span className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> 已自动保存
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> 
+                    {lastSyncTime ? `已同步至云端 (${lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : '已自动保存'}
                   </span>
                 )}
               </div>

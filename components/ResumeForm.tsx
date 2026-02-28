@@ -5,7 +5,7 @@ import {
   Trophy, Heart, Palette, Camera, Layout, Settings, BookOpen, 
   MessageSquare, UserCircle, Star, School, Calendar, Upload,
   Frame, Square, Circle, Hexagon, Shield, Loader2, Ticket, Scissors, Smile,
-  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool, AlertTriangle
+  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool, AlertTriangle, Cloud
 } from 'lucide-react';
 import { ResumeData, FamilyMember, Award, AvatarFrameType, AvatarShape, HobbyShape } from '../types';
 import { compressImage } from '../utils/imageUtils';
@@ -330,6 +330,22 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
     }
   };
 
+  const downloadBackup = () => {
+    try {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `简历数据备份-${data.basicInfo.name || '未命名'}-${new Date().toLocaleDateString()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('导出备份失败');
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadType) return;
@@ -483,18 +499,18 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
 
         {/* 存储空间已满警告 */}
         {saveError && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-[32px] p-6 mb-8 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20">
-              <AlertTriangle className="text-white" size={24} />
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-[32px] p-6 mb-8 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
+              <Cloud size={24} className="text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-red-500 font-black text-sm uppercase tracking-wider mb-1">存储空间已满 (Storage Full)</h3>
-              <p className="text-red-500/70 text-xs leading-relaxed font-bold">
-                浏览器本地存储(5MB)已达到上限，当前更改无法自动保存。
+              <h3 className="text-amber-500 font-black text-sm uppercase tracking-wider mb-1">正在使用云端同步 (Cloud Sync Active)</h3>
+              <p className="text-amber-500/70 text-xs leading-relaxed font-bold">
+                您的本地浏览器空间已满，但请放心，所有更改已实时同步到服务器。
                 <br />
-                建议：1. <button onClick={migrateImagesToServer} disabled={isMigrating} className="underline hover:text-red-600 font-black">{isMigrating ? '正在同步图片...' : '点击此处同步旧图到服务器'}</button>（推荐：不丢失数据） 
+                您可以随时刷新或在其他设备上输入同一个验证码继续制作。
                 <br />
-                2. <button onClick={clearLargeImages} className="text-red-500/50 hover:text-red-600 underline ml-2">清除本地未同步大图</button>（慎点：将永久删除未上传图片）
+                建议：<button onClick={migrateImagesToServer} disabled={isMigrating} className="underline hover:text-amber-600 font-black">{isMigrating ? '正在同步图片...' : '点击此处同步本地旧图'}</button>（将图片彻底转存至服务器硬盘）
               </p>
             </div>
           </div>
