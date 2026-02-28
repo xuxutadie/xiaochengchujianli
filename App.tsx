@@ -308,6 +308,7 @@ const migrateData = (data: any): ResumeData => {
   const newData = { 
     ...INITIAL_RESUME_DATA, 
     ...data,
+    darkMode: data?.darkMode ?? INITIAL_RESUME_DATA.darkMode,
     cover: { ...INITIAL_RESUME_DATA.cover, ...(data?.cover || {}) },
     backCover: { ...INITIAL_RESUME_DATA.backCover, ...(data?.backCover || {}) },
     basicInfo: { ...INITIAL_RESUME_DATA.basicInfo, ...(data?.basicInfo || {}) },
