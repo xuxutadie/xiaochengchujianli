@@ -397,6 +397,14 @@ const isLightColor = (color: string) => {
 function App() {
   // Initialize with default data
   const [data, setData] = useState<ResumeData>(INITIAL_RESUME_DATA);
+  
+  // Theme CSS variables
+  const themeVars = {
+    '--theme-color': data.themeColor || '#D9F217',
+    '--theme-label': data.darkMode ? '#ffffff' : '#1A1C1E',
+    '--theme-card': data.darkMode ? '#1c1c1e' : '#ffffff',
+    '--theme-border': data.darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+  } as React.CSSProperties;
   const [scale, setScale] = useState(0.5);
   const [layoutMode, setLayoutMode] = useState<'single' | 'grid'>('single'); // 'single' 为单列, 'grid' 为三列并排
   const [isLoaded, setIsLoaded] = useState(false);
