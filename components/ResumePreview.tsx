@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape, LayoutType } from '../types';
 import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare } from 'lucide-react';
 
