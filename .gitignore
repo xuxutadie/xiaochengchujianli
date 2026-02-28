@@ -26,3 +26,9 @@ dist-ssr
 # Uploaded images
 backend/uploads/
 !backend/uploads/.gitkeep
+
+# Temporary files
+add.py
+fix.ps1
+fix_preview.py
+temp.txt

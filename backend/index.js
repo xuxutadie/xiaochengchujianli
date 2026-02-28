@@ -161,6 +161,50 @@ app.post('/api/verify', async (req, res) => {
   }
 });
 
+// Generate temporary code (for cloud save)
+app.post('/api/generate-temp-code', async (req, res) => {
+  try {
+    const generateCode = () => {
+      const chars = '0123456789';
+      let result = '';
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+
+    let code;
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    while (attempts < maxAttempts) {
+      code = 'TMP' + generateCode();
+      const check = await pool.query(
+        'SELECT code FROM verification_codes WHERE code = $1',
+        [code]
+      );
+      if (check.rows.length === 0) {
+        break;
+      }
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      return res.status(500).json({ success: false, message: '生成临时码失败，请稍后重试' });
+    }
+
+    await pool.query(
+      'INSERT INTO verification_codes (code) VALUES ($1)',
+      [code]
+    );
+
+    res.json({ success: true, code: code, message: '临时验证码生成成功' });
+  } catch (err) {
+    console.error('Generate temp code error:', err);
+    res.status(500).json({ success: false, message: '生成临时码失败' });
+  }
+});
+
 // --- 新增：简历数据持久化接口 ---
 
 // 1. 保存/更新简历数据

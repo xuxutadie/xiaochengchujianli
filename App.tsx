@@ -425,6 +425,7 @@ function App() {
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [isGeneratingTempCode, setIsGeneratingTempCode] = useState(false);
 
   const getBackendUrl = () => {
     let url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
@@ -432,6 +433,43 @@ function App() {
       url = `https://${url}`;
     }
     return url.replace(/\/$/, '');
+  };
+
+  const handleGenerateTempCode = async () => {
+    if (data.verificationCode) {
+      alert('您已经启用了云端保存！验证码：' + data.verificationCode);
+      return;
+    }
+
+    if (isGeneratingTempCode) return;
+
+    if (!confirm('确定要启用云端保存吗？这将自动保存您的简历数据到服务器，支持跨设备同步。')) {
+      return;
+    }
+
+    setIsGeneratingTempCode(true);
+
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/generate-temp-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        setData(prev => ({ ...prev, verificationCode: result.code }));
+        alert('云端保存已启用！\n您的临时验证码：' + result.code + '\n\n请记住此验证码，换设备时可以使用此码恢复您的简历！');
+      } else {
+        alert('生成临时验证码失败：' + (result.message || '未知错误');
+      }
+    } catch (e) {
+      console.error('生成临时验证码失败:', e);
+      alert('生成临时验证码失败，请稍后重试');
+    } finally {
+      setIsGeneratingTempCode(false);
+    }
   };
 
   // 1. Load from LocalStorage on Mount
@@ -673,6 +711,35 @@ function App() {
           </div>
         </div>
         <div className="relative z-10 flex items-center gap-2">
+          {!data.verificationCode && (
+            <button 
+              onClick={handleGenerateTempCode}
+              disabled={isGeneratingTempCode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 active:scale-90 ${
+                isGeneratingTempCode 
+                  ? 'bg-gray-500 text-white cursor-wait' 
+                  : data.darkMode 
+                    ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30' 
+                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
+              }`}
+              title="启用云端保存，支持跨设备同步"
+            >
+              {isGeneratingTempCode ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              {isGeneratingTempCode ? '生成中...' : '云端保存'}
+            </button>
+          )}
+          {data.verificationCode && (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border ${
+              data.darkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+            }`} title="云端保存已启用">
+              <CheckCircle2 size={14} />
+              {data.verificationCode.startsWith('TMP') ? '临时' : '已'}保存
+            </div>
+          )}
           <button 
             onClick={() => setShowAdmin(true)}
             className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 active:scale-90 ${data.darkMode ? 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10' : 'bg-white/10 text-white/80 hover:text-white hover:bg-white/20'}`}
