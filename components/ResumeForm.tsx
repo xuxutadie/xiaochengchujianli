@@ -173,15 +173,23 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
 
   const [isMigrating, setIsMigrating] = useState(false);
 
+  const getBackendUrl = () => {
+    let url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+    if (url && !url.startsWith('http')) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/$/, '');
+  };
+
   const migrateImagesToServer = async () => {
     if (isMigrating) return;
     setIsMigrating(true);
     
     try {
       const isBase64 = (url: string) => url?.startsWith('data:image');
-      const backendUrl = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+      const backendUrl = getBackendUrl();
       
-      const uploadOne = async (base64: string): Promise<string> => {
+      const uploadOne = async (base64: string): Promise<string | null> => {
         try {
           const res = await fetch(base64);
           const blob = await res.blob();
@@ -198,29 +206,47 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
         } catch (e) {
           console.error('Migration failed for image:', e);
         }
-        return base64; // Fallback to original if failed
+        return null;
       };
 
-      const newData = JSON.parse(JSON.stringify(data)); // Deep copy
+      const newData = JSON.parse(JSON.stringify(data));
       let count = 0;
+      let failedCount = 0;
 
       // Helper to migrate array of images
       const migrateImageArray = async (images: any[]) => {
         for (let i = 0; i < images.length; i++) {
           if (isBase64(images[i].url)) {
-            images[i].url = await uploadOne(images[i].url);
-            count++;
+            const newUrl = await uploadOne(images[i].url);
+            if (newUrl) {
+              images[i].url = newUrl;
+              count++;
+            } else {
+              failedCount++;
+            }
           }
         }
       };
 
       // Traverse and migrate all fields
-      if (isBase64(newData.basicInfo.avatarUrl)) { newData.basicInfo.avatarUrl = await uploadOne(newData.basicInfo.avatarUrl); count++; }
-      if (isBase64(newData.cover.backgroundImage)) { newData.cover.backgroundImage = await uploadOne(newData.cover.backgroundImage); count++; }
-      if (isBase64(newData.pageBackground)) { newData.pageBackground = await uploadOne(newData.pageBackground); count++; }
-      if (isBase64(newData.recommendationLetterImage)) { newData.recommendationLetterImage = await uploadOne(newData.recommendationLetterImage); count++; }
-      if (isBase64(newData.coverLetterImage)) { newData.coverLetterImage = await uploadOne(newData.coverLetterImage); count++; }
-      if (isBase64(newData.backCover.backgroundImage)) { newData.backCover.backgroundImage = await uploadOne(newData.backCover.backgroundImage); count++; }
+      const migrateField = async (obj: any, field: string) => {
+        if (isBase64(obj[field])) {
+          const newUrl = await uploadOne(obj[field]);
+          if (newUrl) {
+            obj[field] = newUrl;
+            count++;
+          } else {
+            failedCount++;
+          }
+        }
+      };
+
+      await migrateField(newData.basicInfo, 'avatarUrl');
+      await migrateField(newData.cover, 'backgroundImage');
+      await migrateField(newData, 'pageBackground');
+      await migrateField(newData, 'recommendationLetterImage');
+      await migrateField(newData, 'coverLetterImage');
+      await migrateField(newData.backCover, 'backgroundImage');
 
       await migrateImageArray(newData.qualityReports);
       await migrateImageArray(newData.certificates);
@@ -235,7 +261,14 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
       }
 
       onChange(newData);
-      alert(`成功迁移了 ${count} 张图片到服务器，本地存储空间已释放！`);
+      
+      if (failedCount > 0) {
+        alert(`同步结果：成功同步 ${count} 张图片，失败 ${failedCount} 张。失败的图片仍以本地方式存储，此时请勿执行“清除本地大图”操作。建议检查网络连接或后端配置。`);
+      } else if (count > 0) {
+        alert(`同步成功！已将 ${count} 张图片迁移至服务器。现在您可以安全地执行“清除本地大图”来释放本地空间了。`);
+      } else {
+        alert('没有发现需要同步的本地图片。所有图片可能已在服务器上，或尚未添加图片。');
+      }
     } catch (err) {
       console.error('Global migration failed:', err);
       alert('迁移失败，请检查网络或后端配置。');
@@ -245,9 +278,30 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
   };
 
   const clearLargeImages = () => {
-    if (confirm('【警告】此操作将删除所有尚未同步到服务器的图片（Base64 格式）。如果您之前上传的图片还没来得及同步，它们将从简历中消失。确定要继续吗？')) {
-      const isBase64 = (url: string) => url?.startsWith('data:image');
-      
+    const isBase64 = (url: string) => url?.startsWith('data:image');
+    
+    // 检查是否有未同步的 Base64 图片
+    const hasBase64 = (
+      isBase64(data.basicInfo.avatarUrl) ||
+      isBase64(data.cover.backgroundImage) ||
+      isBase64(data.pageBackground) ||
+      isBase64(data.recommendationLetterImage) ||
+      isBase64(data.coverLetterImage) ||
+      isBase64(data.backCover.backgroundImage) ||
+      data.qualityReports.some(img => isBase64(img.url)) ||
+      data.certificates.some(img => isBase64(img.url)) ||
+      data.hobbies.images.some(img => isBase64(img.url)) ||
+      data.socialPractice.images.some(img => isBase64(img.url)) ||
+      data.portfolio.images.some(img => isBase64(img.url)) ||
+      (data.honorGroups?.some(group => group.images.some(img => isBase64(img.url))))
+    );
+
+    if (!hasBase64) {
+      alert('所有图片均已同步或没有本地大图，无需清理。');
+      return;
+    }
+
+    if (confirm('【警告】此操作将删除所有尚未同步到服务器的本地图片（Base64 格式）。这些图片如果没在服务器上备份，将从简历中永久消失！确定要继续吗？')) {
       const newData = { ...data };
       
       // 清理各个部分的图片
@@ -272,7 +326,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
       }
       
       onChange(newData);
-      alert('清理完成！已释放本地存储空间。');
+      alert('清理完成！已释放本地存储空间。建议您重新上传刚才消失的图片（它们将自动传往服务器）。');
     }
   };
 
@@ -293,23 +347,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
 
         // 2. 尝试上传到后端服务器 (Zeabur 50G 存储)
         try {
-          // 优先从环境变量获取，如果获取不到则使用当前 window.location 的域名
-          let backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-          
-          if (!backendUrl) {
-            // 如果没有配置后端地址，尝试根据当前访问地址推断（适用于 Zeabur 部署）
-            const host = window.location.host;
-            if (host.includes('zeabur.app')) {
-              // 假设后端和前端在同一个项目下，通常可以通过替换子域名或使用特定域名
-              // 这里我们保持原样或提示用户配置环境变量
-              console.warn('⚠️ 未配置 VITE_BACKEND_URL，尝试使用本地地址');
-              backendUrl = 'http://localhost:3000';
-            } else {
-              backendUrl = 'http://localhost:3000';
-            }
-          }
-
-          backendUrl = backendUrl.replace(/\/$/, '');
+          const backendUrl = getBackendUrl();
           
           // 将 base64 转回 Blob 进行上传
           const res = await fetch(processedBase64);
