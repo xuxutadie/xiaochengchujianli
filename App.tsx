@@ -398,6 +398,10 @@ function App() {
   // Initialize with default data
   const [data, setData] = useState<ResumeData>(INITIAL_RESUME_DATA);
   
+  // Refs
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  
   // Theme CSS variables
   const themeVars = {
     '--theme-color': data.themeColor || '#D9F217',
