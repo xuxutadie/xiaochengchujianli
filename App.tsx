@@ -462,7 +462,7 @@ function App() {
         setData(prev => ({ ...prev, verificationCode: result.code }));
         alert('云端保存已启用！\n您的临时验证码：' + result.code + '\n\n请记住此验证码，换设备时可以使用此码恢复您的简历！');
       } else {
-        alert('生成临时验证码失败：' + (result.message || '未知错误');
+        alert('生成临时验证码失败：' + (result.message || '未知错误'));
       }
     } catch (e) {
       console.error('生成临时验证码失败:', e);
