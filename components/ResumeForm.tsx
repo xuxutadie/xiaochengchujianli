@@ -286,7 +286,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
       const reader = new FileReader();
       reader.onload = async () => {
         const base64Image = reader.result as string;
-        const processedBase64 = await compressImage(base64Image, 1600, 1600, 0.85);
+        // 默认参数已在 imageUtils 中优化，此处使用更轻量的参数提速
+        const processedBase64 = await compressImage(base64Image, 1280, 1280, 0.75);
         
         let finalUrl = processedBase64;
 
