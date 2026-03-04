@@ -1390,7 +1390,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <div className="absolute top-0 left-0 w-full h-full opacity-10">
             <SafeImage src={data.cover.backgroundImage} className="w-full h-full object-cover grayscale" />
           </div>
-          <div className="relative z-10 w-[80%] aspect-square border-8 border-white p-12 flex flex-col items-center justify-center text-white">
+          <div className="relative z-10 w-[80%] aspect-square border-8 border-white p-12 flex flex-col items-center justify-center text-white print:bg-[var(--theme-primary)] print:text-white">
              <div className="mb-10">
                 <RenderAvatar 
                   url={data.basicInfo.avatarUrl} 
@@ -1399,11 +1399,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                   size="w-48 h-48"
                 />
              </div>
-             <h2 className="text-4xl font-black italic mb-6 text-center">"{data.closingMessage || '成长每一步，都值得被记录'}"</h2>
-             <div className="h-2 w-24 bg-white mb-8"></div>
+             <h2 className="text-4xl font-black italic mb-6 text-center print:text-white" style={{color: 'white'}}>"{data.closingMessage || '成长每一步，都值得被记录'}"</h2>
+             <div className="h-2 w-24 bg-white mb-8 print:bg-white"></div>
              <div className="text-center">
-               <div className="text-5xl font-black tracking-tighter uppercase mb-2">{data.basicInfo.name}</div>
-               <div className="text-xl font-bold opacity-60 tracking-[0.3em] uppercase">{data.basicInfo.school}</div>
+               <div className="text-5xl font-black tracking-tighter uppercase mb-2 print:text-white" style={{color: 'white'}}>{data.basicInfo.name}</div>
+               <div className="text-xl font-bold opacity-60 tracking-[0.3em] uppercase print:text-white" style={{color: 'white'}}>{data.basicInfo.school}</div>
              </div>
           </div>
         </div>
@@ -1416,7 +1416,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/5 rounded-full -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-[var(--theme-primary)]/5 rounded-full -ml-48 -mb-48"></div>
           
-          <div className="relative z-10 flex flex-col items-center w-full max-w-lg bg-white/40 backdrop-blur-md p-12 rounded-[5rem] border-4 border-dashed border-[var(--theme-primary)]/20 shadow-xl">
+          <div className="relative z-10 flex flex-col items-center w-full max-w-lg bg-white/40 backdrop-blur-md p-12 rounded-[5rem] border-4 border-dashed border-[var(--theme-primary)]/20 shadow-xl print:bg-white print:backdrop-blur-none">
             <div className="mb-12 transform -rotate-3 bg-white p-4 rounded-3xl shadow-lg border-2 border-[var(--theme-primary)]/10">
                <RenderAvatar 
                  url={data.basicInfo.avatarUrl} 
@@ -1430,7 +1430,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                <div className="absolute -top-6 -left-6 opacity-10">
                  <Quote size={40} className="text-[var(--theme-primary)]" />
                </div>
-               <p className="text-2xl font-black text-[var(--theme-readable-primary)] italic leading-relaxed">
+               <p className="text-2xl font-black text-[var(--theme-readable-primary)] italic leading-relaxed print:text-gray-900">
                  {data.closingMessage || '成长每一步，都值得被记录'}
                </p>
                <div className="absolute -bottom-6 -right-6 opacity-10 transform rotate-180">
@@ -1438,19 +1438,19 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                </div>
             </div>
             
-            <div className="h-1.5 w-32 bg-gradient-to-r from-transparent via-[var(--theme-primary)] to-transparent opacity-30 mb-10"></div>
+            <div className="h-1.5 w-32 bg-gradient-to-r from-transparent via-[var(--theme-primary)] to-transparent opacity-30 mb-10 print:opacity-100"></div>
             
             <div className="text-center space-y-3">
-               <h3 className="text-4xl font-black text-[var(--theme-readable-primary)] tracking-tighter">
+               <h3 className="text-4xl font-black text-[var(--theme-readable-primary)] tracking-tighter print:text-gray-900">
                  {data.basicInfo.name}
                </h3>
-               <div className="text-sm font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] bg-[var(--theme-primary)]/10 px-4 py-1 rounded-full">
+               <div className="text-sm font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] bg-[var(--theme-primary)]/10 px-4 py-1 rounded-full print:bg-gray-100 print:text-gray-700">
                  {data.basicInfo.school}
                </div>
             </div>
           </div>
           
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-black opacity-20 uppercase tracking-[1em] whitespace-nowrap">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-black opacity-20 uppercase tracking-[1em] whitespace-nowrap print:opacity-100 print:text-gray-600">
              THE END • THANK YOU
           </div>
         </div>
@@ -1460,13 +1460,13 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
           <div className="absolute inset-0 overflow-hidden z-0">
             <SafeImage 
               src={data.cover.backgroundImage} 
-              className="absolute inset-0 w-full h-full object-cover opacity-90" 
+              className="absolute inset-0 w-full h-full object-cover opacity-90 print:opacity-100" 
             />
-            <div className="absolute inset-0 bg-black/20 z-10"></div>
+            <div className="absolute inset-0 bg-black/20 z-10 print:bg-black/10"></div>
           </div>
           
           <div className="relative z-20 h-full flex flex-col items-center justify-center p-20 text-center">
-              <div className="p-12 bg-white/75 backdrop-blur-md rounded-[3rem] border-2 border-[var(--theme-primary)]/20 shadow-2xl max-w-lg w-full flex flex-col items-center">
+              <div className="p-12 bg-white/75 backdrop-blur-md rounded-[3rem] border-2 border-[var(--theme-primary)]/20 shadow-2xl max-w-lg w-full flex flex-col items-center print:bg-white print:backdrop-blur-none print:shadow-lg">
                  <div className="mb-10">
                    <RenderAvatar 
                      url={data.basicInfo.avatarUrl} 
@@ -1477,23 +1477,23 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                  </div>
                  
                  <div className="mb-8">
-                   <Quote size={48} className="mx-auto text-[var(--theme-primary)] opacity-40 mb-6"/>
-                   <p className="text-2xl font-bold leading-relaxed text-[var(--theme-readable-primary)] italic">
+                   <Quote size={48} className="mx-auto text-[var(--theme-primary)] opacity-40 mb-6 print:opacity-60"/>
+                   <p className="text-2xl font-bold leading-relaxed text-[var(--theme-readable-primary)] italic print:text-gray-900">
                      "{data.closingMessage || '成长每一步，都值得被记录'}"
                    </p>
                  </div>
                  
-                 <div className="w-24 h-1.5 bg-[var(--theme-primary)]/30 mx-auto rounded-full mb-8" />
+                 <div className="w-24 h-1.5 bg-[var(--theme-primary)]/30 mx-auto rounded-full mb-8 print:bg-[var(--theme-primary)]/50" />
                  
                  <div className="space-y-2">
-                   <div className="font-black text-3xl text-[var(--theme-readable-primary)] tracking-wider">{data.basicInfo.name}</div>
-                   <div className="text-[var(--theme-readable-primary)]/60 font-bold tracking-widest uppercase text-xs">{data.basicInfo.school}</div>
+                   <div className="font-black text-3xl text-[var(--theme-readable-primary)] tracking-wider print:text-gray-900">{data.basicInfo.name}</div>
+                   <div className="text-[var(--theme-readable-primary)]/60 font-bold tracking-widest uppercase text-xs print:text-gray-600">{data.basicInfo.school}</div>
                  </div>
               </div>
           </div>
         </>
       )}
-      <div className="absolute bottom-4 right-8 text-xs text-white/60 z-30 font-bold tracking-widest">
+      <div className="absolute bottom-4 right-8 text-xs text-white/60 z-30 font-bold tracking-widest print:text-gray-800">
         {String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + (data.recommendationLetterImage ? 6 : 5)).padStart(2, '0')}
       </div>
     </div>
