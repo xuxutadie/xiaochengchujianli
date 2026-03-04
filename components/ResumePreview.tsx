@@ -1,6 +1,6 @@
 import React, { forwardRef, useState } from 'react';
 import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape, LayoutType } from '../types';
-import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare } from 'lucide-react';
+import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare, AlertTriangle } from 'lucide-react';
 
 interface ResumePreviewProps {
   data: ResumeData;
