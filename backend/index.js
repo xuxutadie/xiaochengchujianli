@@ -115,6 +115,17 @@ const initDb = async () => {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
+
+    // 新增：图片数据表，用于存储上传的图片
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS images (
+        id SERIAL PRIMARY KEY,
+        filename TEXT UNIQUE NOT NULL,
+        data BYTEA NOT NULL,
+        mimetype TEXT DEFAULT 'image/jpeg',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `);
     client.release();
     console.log('✅ 数据库表初始化完成');
   } catch (err) {
@@ -545,22 +556,60 @@ app.post('/api/ai/polish', async (req, res) => {
   }
 });
 
-// Image Upload endpoint
-app.post('/api/upload', upload.single('image'), (req, res) => {
+// Image Upload endpoint - 保存到数据库
+app.post('/api/upload', upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: '没有上传文件' });
   }
 
-  // Build the absolute URL for the uploaded image
-  // In production, Zeabur handles the domain. 
-  // We use relative paths in the frontend and the browser resolves them based on the API base URL.
-  const imageUrl = `/uploads/${req.file.filename}`;
-  
-  res.json({ 
-    success: true, 
-    url: imageUrl,
-    filename: req.file.filename
-  });
+  try {
+    // 读取文件并保存到数据库
+    const fileData = await fs.readFile(req.file.path);
+    const filename = req.file.filename;
+    
+    // 保存到数据库
+    await pool.query(
+      'INSERT INTO images (filename, data, mimetype) VALUES ($1, $2, $3) ON CONFLICT (filename) DO UPDATE SET data = $2, created_at = NOW()',
+      [filename, fileData, req.file.mimetype || 'image/jpeg']
+    );
+    
+    // 删除临时文件
+    await fs.remove(req.file.path);
+    
+    // 返回图片访问 URL
+    const imageUrl = `/api/images/${filename}`;
+    
+    res.json({ 
+      success: true, 
+      url: imageUrl,
+      filename: filename
+    });
+  } catch (err) {
+    console.error('图片保存到数据库失败:', err);
+    res.status(500).json({ success: false, message: '图片保存失败: ' + err.message });
+  }
+});
+
+// 图片访问接口 - 从数据库读取
+app.get('/api/images/:filename', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT data, mimetype FROM images WHERE filename = $1',
+      [req.params.filename]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '图片不存在' });
+    }
+    
+    const image = result.rows[0];
+    res.setHeader('Content-Type', image.mimetype);
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 缓存一年
+    res.send(image.data);
+  } catch (err) {
+    console.error('读取图片失败:', err);
+    res.status(500).json({ success: false, message: '读取图片失败' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
