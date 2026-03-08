@@ -208,12 +208,17 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
   const SafeImage = ({ src, className, style }: { src?: string, className?: string, style?: React.CSSProperties }) => {
     const [error, setError] = useState(false);
     if (!src) return null;
+    
+    // Debug log
+    console.log('SafeImage loading:', src?.substring(0, 100) + '...');
+    
     if (error) {
       return (
         <div className={`flex flex-col items-center justify-center bg-red-500/5 text-red-500/40 p-4 text-center ${className}`} style={style}>
           <AlertTriangle size={24} className="mb-2 opacity-20" />
           <span className="text-[10px] font-bold uppercase tracking-tighter">图片加载失败</span>
           <span className="text-[8px] opacity-50 mt-1">请尝试重新上传或同步</span>
+          <span className="text-[6px] opacity-30 mt-1 break-all max-w-full">{src?.substring(0, 50)}...</span>
         </div>
       );
     }
@@ -222,7 +227,10 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         src={src} 
         className={className} 
         style={style} 
-        onError={() => setError(true)} 
+        onError={(e) => {
+          console.error('Image load error:', src?.substring(0, 100), e);
+          setError(true);
+        }} 
         loading="lazy"
       />
     );
