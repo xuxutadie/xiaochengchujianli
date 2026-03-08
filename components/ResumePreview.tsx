@@ -823,8 +823,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
              </div>
           </section>
           
-          <section className="mb-6">
-             <div className="inline-block bg-[var(--theme-primary)] px-4 py-1.5 mb-4 shadow-[4px_4px_0px_0px_var(--theme-readable-primary)]">
+          <section className="mb-8">
+             <div className="inline-block bg-[var(--theme-primary)] px-4 py-1.5 mb-5 shadow-[4px_4px_0px_0px_var(--theme-readable-primary)]">
                <h3 className="text-sm font-black text-[var(--theme-contrast-text)] flex items-center gap-2 tracking-widest">
                  我的成绩 / Grades
                </h3>
@@ -834,9 +834,9 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                <table className="w-full border-collapse">
                  <thead>
                    <tr className="bg-[var(--theme-primary)]">
-                     <th className="py-2 px-2 text-[var(--theme-contrast-text)] text-[10px] font-black tracking-widest border-r border-[var(--theme-border)]/20">科目</th>
+                     <th className="py-2.5 px-3 text-[var(--theme-contrast-text)] text-[11px] font-black tracking-widest border-r border-[var(--theme-border)]/20">科目</th>
                      {data.grades[0]?.subjects.map((sub, i) => (
-                       <th key={i} className="py-2 px-2 text-[var(--theme-contrast-text)] text-[10px] font-black tracking-widest border-r border-[var(--theme-border)]/20 last:border-r-0">
+                       <th key={i} className="py-2.5 px-3 text-[var(--theme-contrast-text)] text-[11px] font-black tracking-widest border-r border-[var(--theme-border)]/20 last:border-r-0">
                          {sub.name}
                        </th>
                      ))}
@@ -845,11 +845,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                  <tbody>
                    {data.grades.map((grade, rowIndex) => (
                      <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-[var(--theme-secondary)] bg-opacity-10' : 'bg-[var(--theme-card)]'}>
-                       <td className="py-2 px-2 text-center font-black text-[var(--theme-readable-primary)] border-r border-[var(--theme-primary)] border-opacity-20 text-[11px]">
+                       <td className="py-2.5 px-3 text-center font-black text-[var(--theme-readable-primary)] border-r border-[var(--theme-primary)] border-opacity-20 text-[12px]">
                          {grade.rowName}
                        </td>
                        {grade.subjects.map((sub, subIndex) => (
-                         <td key={subIndex} className={`py-2 px-2 text-center font-black text-[var(--theme-readable-primary)] border-r border-[var(--theme-primary)] border-opacity-20 last:border-r-0 text-sm ${subIndex % 2 === 0 ? 'bg-[var(--theme-readable-primary)]/[0.03]' : ''}`}>
+                         <td key={subIndex} className={`py-2.5 px-3 text-center font-black text-[var(--theme-readable-primary)] border-r border-[var(--theme-primary)] border-opacity-20 last:border-r-0 text-base ${subIndex % 2 === 0 ? 'bg-[var(--theme-readable-primary)]/[0.03]' : ''}`}>
                            {sub.value}
                          </td>
                        ))}
