@@ -147,6 +147,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
   const [uploadingGroupId, setUploadingGroupId] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadType, setUploadType] = useState<'avatar' | 'cover' | 'pageBackground' | 'quality' | 'awards' | 'hobbies' | 'recommendation' | 'backCover' | 'socialPractice' | 'portfolio' | 'coverLetter' | 'honorGroup' | null>(null);
+  const [dragHonorImage, setDragHonorImage] = useState<{ groupId: string; index: number } | null>(null);
+  const [dragHonorAward, setDragHonorAward] = useState<{ groupId: string; index: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleSection = (id: string) => {
@@ -1348,7 +1350,10 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
 
                 <div className="space-y-12">
                   {(data.honorGroups || []).map((group, groupIndex) => (
-                    <div key={group.id} className="p-8 bg-gradient-to-br from-[#1c1c1e] to-[#252529] rounded-[48px] border border-white/5 space-y-8 relative group hover:border-accent/30 transition-all shadow-2xl duration-500">
+                    <div
+                      key={group.id}
+                      className="p-8 bg-gradient-to-br from-[#1c1c1e] to-[#252529] rounded-[48px] border border-white/5 space-y-8 relative group hover:border-accent/30 transition-all shadow-2xl duration-500"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex-1 max-w-md">
                           <div className="flex flex-col ml-1 mb-2">
@@ -1395,7 +1400,30 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
                         </div>
                         <div className="grid grid-cols-1 gap-4">
                           {group.awards.map((award, awardIndex) => (
-                            <div key={award.id} className="flex items-center gap-4 bg-white/5 p-4 rounded-[24px] border border-white/5">
+                            <div
+                              key={award.id}
+                              className="flex items-center gap-4 bg-white/5 p-4 rounded-[24px] border border-white/5 cursor-move"
+                              draggable
+                              onDragStart={(e) => {
+                                setDragHonorAward({ groupId: group.id, index: awardIndex });
+                                e.dataTransfer.effectAllowed = 'move';
+                              }}
+                              onDragEnd={() => setDragHonorAward(null)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                if (!dragHonorAward) return;
+                                if (dragHonorAward.groupId !== group.id) return;
+                                if (dragHonorAward.index === awardIndex) return;
+                                const newGroups = [...(data.honorGroups || [])];
+                                const awards = [...newGroups[groupIndex].awards];
+                                const [moved] = awards.splice(dragHonorAward.index, 1);
+                                awards.splice(awardIndex, 0, moved);
+                                newGroups[groupIndex].awards = awards;
+                                onChange({ ...data, honorGroups: newGroups });
+                                setDragHonorAward(null);
+                              }}
+                            >
                               <div className="flex-1 grid grid-cols-3 gap-4">
                                 <input 
                                   value={award.name} 
@@ -1456,7 +1484,30 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                           {(group.images || []).map((img, imgIndex) => (
-                            <div key={img.id} className="group relative bg-[#2c2c2e] rounded-[24px] overflow-hidden border border-white/5 hover:border-accent/40 transition-all flex flex-col">
+                            <div
+                              key={img.id}
+                              className="group relative bg-[#2c2c2e] rounded-[24px] overflow-hidden border border-white/5 hover:border-accent/40 transition-all flex flex-col cursor-move"
+                              draggable
+                              onDragStart={(e) => {
+                                setDragHonorImage({ groupId: group.id, index: imgIndex });
+                                e.dataTransfer.effectAllowed = 'move';
+                              }}
+                              onDragEnd={() => setDragHonorImage(null)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                if (!dragHonorImage) return;
+                                if (dragHonorImage.groupId !== group.id) return;
+                                if (dragHonorImage.index === imgIndex) return;
+                                const newGroups = [...(data.honorGroups || [])];
+                                const images = [...(newGroups[groupIndex].images || [])];
+                                const [moved] = images.splice(dragHonorImage.index, 1);
+                                images.splice(imgIndex, 0, moved);
+                                newGroups[groupIndex].images = images;
+                                onChange({ ...data, honorGroups: newGroups });
+                                setDragHonorImage(null);
+                              }}
+                            >
                               {/* 图片预览 */}
                               <div className="aspect-[4/3] w-full relative overflow-hidden bg-black/20">
                                 <img 
