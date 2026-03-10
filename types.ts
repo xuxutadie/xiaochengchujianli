@@ -80,7 +80,8 @@ export enum AvatarShape {
 export enum LayoutType {
   Classic = 'classic',
   Modern = 'modern',
-  Storybook = 'storybook'
+  Storybook = 'storybook',
+  Honor = 'honor'
 }
 
 export interface FamilyMember {

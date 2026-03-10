@@ -146,6 +146,18 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       };
     }
 
+    if (layout === LayoutType.Honor) {
+      return {
+        ...baseStyles,
+        headerClass: `h-32 px-[55px] flex items-center justify-between relative z-10 flex-shrink-0`,
+        titleClass: 'text-3xl font-black tracking-[0.1em] uppercase',
+        subTitleClass: 'opacity-60 text-[10px] font-bold uppercase tracking-[0.3em]',
+        sectionTitleClass: 'text-xl font-black mb-6 pb-2 border-b-4 border-[var(--theme-primary)] text-[var(--theme-readable-primary)] flex items-center gap-3 relative z-10',
+        contentPanelClass: `mx-auto w-[684px] mt-10 mb-10 p-10 bg-white rounded-2xl relative z-10 flex-1 flex flex-col border-2 border-[var(--theme-primary)]/20 shadow-xl ${isPrinting ? 'overflow-visible min-h-[900px]' : 'overflow-hidden min-h-0'}`,
+        imageContainerClass: 'rounded-xl overflow-hidden border-4 border-[var(--theme-primary)] shadow-2xl relative z-10 flex items-center justify-center',
+      };
+    }
+
     return baseStyles;
   };
 
@@ -190,13 +202,13 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     }));
   }) : [];
 
-  const honorPagesCount = hasHonorGroups ? honorGroupPages.length : 1;
+  const honorPagesCount = layout === LayoutType.Honor ? 0 : (hasHonorGroups ? honorGroupPages.length : 1);
 
   // 智能目录项生成
   const tocItems = [
     { title: '基本档案', subtitle: 'Profile & Growth', page: 2, icon: <User size={18} /> },
     ...(qualityPages.length > 0 ? [{ title: '素质表现', subtitle: 'Evaluation', page: 3, icon: <BookOpen size={18} /> }] : []),
-    { title: '荣誉汇总', subtitle: 'Honors & Awards', page: 3 + qualityPages.length, icon: <Award size={18} /> },
+    ...(layout !== LayoutType.Honor ? [{ title: '荣誉汇总', subtitle: 'Honors & Awards', page: 3 + qualityPages.length, icon: <Award size={18} /> }] : []),
     ...(certPages.length > 0 ? [{ title: '证书展示', subtitle: 'Certificates', page: 3 + qualityPages.length + honorPagesCount, icon: <FileText size={18} /> }] : []),
     ...(showPortfolio ? [{ title: '个人作品集', subtitle: 'Portfolio', page: 3 + qualityPages.length + honorPagesCount + certPages.length, icon: <Palette size={18} /> }] : []),
     { title: '兴趣与特长', subtitle: 'Hobbies', page: 3 + qualityPages.length + honorPagesCount + certPages.length + portfolioOffset, icon: <Heart size={18} /> },
@@ -209,16 +221,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     const [error, setError] = useState(false);
     if (!src) return null;
     
-    // Debug log
-    console.log('SafeImage loading:', src?.substring(0, 100) + '...');
-    
     if (error) {
       return (
         <div className={`flex flex-col items-center justify-center bg-red-500/5 text-red-500/40 p-4 text-center ${className}`} style={style}>
           <AlertTriangle size={24} className="mb-2 opacity-20" />
           <span className="text-[10px] font-bold uppercase tracking-tighter">图片加载失败</span>
           <span className="text-[8px] opacity-50 mt-1">请尝试重新上传或同步</span>
-          <span className="text-[6px] opacity-30 mt-1 break-all max-w-full">{src?.substring(0, 50)}...</span>
         </div>
       );
     }
@@ -227,10 +235,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         src={src} 
         className={className} 
         style={style} 
-        onError={(e) => {
-          console.error('Image load error:', src?.substring(0, 100), e);
-          setError(true);
-        }} 
+        onError={() => setError(true)} 
         loading="lazy"
       />
     );
@@ -566,9 +571,123 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       {/* ---------------- COVER PAGE ---------------- */}
       <div className={`a4-page ${style.pageClass} flex flex-col items-center overflow-hidden`}>
         <WatermarkOverlay />
-        <StorybookDecoration />
+        {layout === LayoutType.Storybook && <StorybookDecoration />}
         
-        {layout === LayoutType.Modern ? (
+        {layout === LayoutType.Honor ? (
+          // Honor Cover (New Template)
+          <div className="relative w-full h-full flex flex-col bg-white overflow-hidden">
+            {/* Background Geometric Shapes */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0">
+              <div 
+                className="absolute top-0 left-0 w-[60%] h-[45%] opacity-20"
+                style={{ 
+                  background: 'var(--theme-primary)',
+                  clipPath: 'polygon(0 0, 100% 0, 0 100%)'
+                }}
+              ></div>
+              <div 
+                className="absolute top-[15%] right-[-10%] w-[50%] h-[30%] opacity-10"
+                style={{ 
+                  background: 'var(--theme-primary)',
+                  clipPath: 'polygon(50% 0, 100% 100%, 0 100%)',
+                  transform: 'rotate(15deg)'
+                }}
+              ></div>
+              <div 
+                className="absolute bottom-0 right-0 w-[70%] h-[40%] opacity-15"
+                style={{ 
+                  background: 'var(--theme-primary)',
+                  clipPath: 'polygon(100% 0, 100% 100%, 0 100%)'
+                }}
+              ></div>
+              <div 
+                className="absolute top-[40%] left-[-5%] w-[30%] h-[20%] opacity-10"
+                style={{ 
+                  background: 'var(--theme-primary)',
+                  clipPath: 'polygon(0 0, 100% 50%, 0 100%)'
+                }}
+              ></div>
+            </div>
+
+            {/* Content Container */}
+            <div className="relative z-10 w-full h-full flex flex-col p-16">
+              {/* Top Header Section */}
+              <div className="flex justify-between items-start mb-12">
+                <div className="flex flex-col">
+                  <div className="flex items-baseline gap-2 mb-[-10px]">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Personal</span>
+                  </div>
+                  <div className="relative">
+                    <div className="flex items-start">
+                      <span className="text-[120px] font-black leading-none text-[#8B2323] tracking-tighter">RE</span>
+                      <div className="flex flex-col mt-6 ml-2">
+                        <span className="text-4xl font-black tracking-[0.2em] text-dark">简历</span>
+                        <div className="h-1.5 w-12 bg-[#8B2323] mt-1"></div>
+                      </div>
+                    </div>
+                    <div className="mt-[-40px]">
+                      <span className="text-[100px] font-black leading-none text-[#8B2323] tracking-[0.1em]">SUME</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Student Info */}
+              <div className="mb-16">
+                <h1 className="text-6xl font-black text-dark mb-4 tracking-tight">{data.basicInfo.name}</h1>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-dark/80 tracking-widest italic font-serif">{data.contact.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black text-dark/40 uppercase tracking-widest">{data.basicInfo.school}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo - Large on the right */}
+              {data.cover.showAvatar && (
+                <div className="absolute top-[25%] right-12 w-[45%] aspect-[3/4] z-20">
+                  <div className="relative w-full h-full">
+                    {/* Decorative Frame for Photo */}
+                    <div className="absolute inset-[-15px] border-4 border-[var(--theme-primary)] opacity-20 transform rotate-2"></div>
+                    <div className="absolute inset-[-10px] border-2 border-dark opacity-10 transform -rotate-1"></div>
+                    
+                    <div className="w-full h-full overflow-hidden shadow-2xl relative z-10 rounded-sm">
+                      <SafeImage 
+                        src={data.basicInfo.avatarUrl} 
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Awards List - Bottom Left */}
+              <div className="mt-auto max-w-[55%]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-[2px] w-8 bg-[#8B2323]"></div>
+                  <span className="text-sm font-black uppercase tracking-[0.3em] text-[#8B2323]">Core Honors</span>
+                </div>
+                <div className="space-y-3">
+                  {(data.honorGroups?.[0]?.awards || data.certificates.slice(0, 10)).slice(0, 10).map((award, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="mt-1.5 shrink-0">
+                        <div className="w-2 h-2 rotate-45 bg-[#8B2323]/40"></div>
+                      </div>
+                      <span className="text-[13px] font-bold text-dark/70 leading-snug">
+                        {typeof award === 'string' ? award : (award as any).name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Accent Line */}
+            <div className="absolute bottom-0 left-0 w-full h-4 bg-[#8B2323]"></div>
+          </div>
+        ) : layout === LayoutType.Modern ? (
           // Modern Cover
           <div className="relative w-full h-full flex flex-col">
             <div className="absolute top-0 left-0 w-full h-[75%] overflow-hidden">
@@ -908,10 +1027,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
      ))}
 
      {/* ---------------- PAGE: HONORS ---------------- */}
-     {hasHonorGroups ? (
-       honorGroupPages.map((pageInfo, pageIdxInTotal) => {
-         const { group, pageAwards, pageIdx, totalPages, groupIdx } = pageInfo;
-         return (
+      {layout !== LayoutType.Honor && (
+        hasHonorGroups ? (
+          honorGroupPages.map((pageInfo, pageIdxInTotal) => {
+            const { group, pageAwards, pageIdx, totalPages, groupIdx } = pageInfo;
+            return (
            <div key={`${group.id || groupIdx}-${pageIdx}`} className={`a4-page ${style.pageClass}`}>
              <PageBackground />
              <WatermarkOverlay />

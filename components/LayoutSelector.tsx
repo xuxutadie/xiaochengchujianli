@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, LayoutGrid, BookOpen, Layers } from 'lucide-react';
+import { Layout, LayoutGrid, BookOpen, Layers, Trophy } from 'lucide-react';
 import { LayoutType } from '../types';
 
 interface LayoutSelectorProps {
@@ -12,6 +12,7 @@ const layouts = [
   { id: LayoutType.Classic, name: '经典画报', icon: Layout, desc: '传统且严谨的经典布局' },
   { id: LayoutType.Modern, name: '现代极简', icon: LayoutGrid, desc: '灵动且现代的网格流' },
   { id: LayoutType.Storybook, name: '童趣绘本', icon: BookOpen, desc: '活泼且生动的绘本质感' },
+  { id: LayoutType.Honor, name: '荣誉典藏', icon: Trophy, desc: '首页展示核心荣誉成就' },
 ];
 
 const LayoutSelector: React.FC<LayoutSelectorProps> = ({ currentLayout, onLayoutChange, darkMode }) => {
@@ -31,7 +32,7 @@ const LayoutSelector: React.FC<LayoutSelectorProps> = ({ currentLayout, onLayout
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
         {layouts.map((layout) => {
           const isActive = currentLayout === layout.id;
           const Icon = layout.icon;
