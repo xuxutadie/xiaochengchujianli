@@ -10,14 +10,14 @@ interface ResumePreviewProps {
   showWatermark?: boolean;
 }
 
-const chunk = <T,>(arr: T[] | undefined | null, size: number): T[][] => {
+function chunk<T>(arr: T[] | undefined | null, size: number): T[][] {
   if (!arr || !Array.isArray(arr)) return [];
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size)
   );
-};
+}
 
-const isLightColor = (color: string) => {
+function isLightColor(color: string): boolean {
   if (!color || typeof color !== 'string') return false;
   const hex = color.replace('#', '');
   if (hex.length !== 6) return false;
@@ -25,10 +25,17 @@ const isLightColor = (color: string) => {
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 185; // Threshold for "light" color
-};
+  return brightness > 185;
+}
 
-const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, scale = 1, layoutMode = 'single', isPrinting = false, showWatermark = false }, ref) => {
+const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProps, ref: React.ForwardedRef<HTMLDivElement>) {
+  const { 
+    data, 
+    scale = 1, 
+    layoutMode = 'single', 
+    isPrinting = false, 
+    showWatermark = false 
+  } = props;
   
   const getThemeStyles = () => {
     const baseColor = data.themeColor || '#D9F217';
@@ -169,6 +176,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
     return [...acc, ...(group.images || [])];
   }, [] as ImageItem[]);
   
+  // 汇总所有分类中的奖项（文字）- 供首页“荣誉集锦”布局使用
+  const allGroupAwards = (data.honorGroups || []).flatMap(group => group.awards || []);
+  const combinedAwards = allGroupAwards.length > 0 ? allGroupAwards : (data.awards || []);
+  const top10Awards = combinedAwards.filter(a => a && (a.name || a.date)).slice(0, 10);
+  const isHonorCoverDense = top10Awards.length > 6;
+
   // 合并旧的证书和新的分类证书（为了兼容性）
   const combinedCertificates = [...(data.certificates || []), ...allHonorImages];
   const certPages = chunk<ImageItem>(combinedCertificates, 4);
@@ -314,6 +327,144 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
       </div>
     );
   };
+
+  const honorsSection = layout !== LayoutType.Honor ? (
+    hasHonorGroups ? (
+      honorGroupPages.map((pageInfo, pageIdxInTotal) => {
+        const { group, pageAwards, pageIdx, totalPages, groupIdx } = pageInfo;
+        return (
+          <div key={`${group.id || groupIdx}-${pageIdx}`} className={`a4-page ${style.pageClass}`}>
+            <PageBackground />
+            <WatermarkOverlay />
+            <StorybookDecoration />
+            <div className={style.headerClass} style={style.headerStyle}>
+              <span className={style.titleClass}>荣誉汇总</span>
+              <span className={style.subTitleClass}>
+                Honors & Awards - {group.category || `Category ${groupIdx + 1}`}
+                {totalPages > 1 ? ` (${pageIdx + 1}/${totalPages})` : ''}
+              </span>
+            </div>
+            <div className={style.contentPanelClass}>
+              <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2 h-full`}>
+                <div className="space-y-6 flex flex-col justify-start">
+                  <div className="space-y-3">
+                    {group.category && pageIdx === 0 && (
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="h-[2px] w-6 bg-[var(--theme-primary)] opacity-50" />
+                        <span className="text-sm font-black text-[var(--theme-primary)] uppercase tracking-[0.2em]">
+                          {group.category}
+                        </span>
+                      </div>
+                    )}
+                    <div className="space-y-4">
+                      {pageAwards.map((award, i) => {
+                        const isCompact = pageAwards.length > 5;
+                        const isUltraCompact = pageAwards.length > 8;
+                        return (
+                          <div key={`${groupIdx}-${pageIdx}-${i}`} className="relative">
+                            <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
+                            <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
+                              ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
+                              <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
+                              <div className="relative z-10 flex justify-between items-center">
+                                <div className="flex flex-col min-w-0 flex-1 mr-4">
+                                  <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
+                                    {award.name || '未命名荣誉'}
+                                  </span>
+                                  <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
+                                    {award.date || '年份未知'}
+                                  </span>
+                                </div>
+                                {award.level && (
+                                  <span
+                                    style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
+                                    className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
+                                      ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
+                                  >
+                                    {award.level}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                {pageIdx === totalPages - 1 && (
+                  <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-auto
+                    ${pageAwards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
+                    <Star className={`${pageAwards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
+                    <p className={`font-serif italic text-[var(--theme-readable-primary)] ${pageAwards.length > 8 ? 'text-xs' : 'text-sm'}`}>
+                      “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + pageIdxInTotal).padStart(2, '0')}</div>
+          </div>
+        );
+      })
+    ) : (
+      <div className={`a4-page ${style.pageClass}`}>
+        <PageBackground />
+        <WatermarkOverlay />
+        <StorybookDecoration />
+        <div className={style.headerClass} style={style.headerStyle}>
+          <span className={style.titleClass}>荣誉汇总</span>
+          <span className={style.subTitleClass}>Honors & Awards</span>
+        </div>
+        <div className={style.contentPanelClass}>
+          <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2`}>
+            <div className="space-y-6 flex flex-col justify-start">
+              {data.awards.filter(a => a.name || a.date || a.level).map((award, i) => {
+                const isCompact = data.awards.length > 5;
+                const isUltraCompact = data.awards.length > 8;
+                return (
+                  <div key={i} className="relative">
+                    <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
+                    <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
+                      ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
+                      <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
+                      <div className="relative z-10 flex justify-between items-center">
+                        <div className="flex flex-col min-w-0 flex-1 mr-4">
+                          <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
+                            {award.name || '未命名荣誉'}
+                          </span>
+                          <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
+                            {award.date || '年份未知'}
+                          </span>
+                        </div>
+                        {award.level && (
+                          <span
+                            style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
+                            className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
+                              ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
+                          >
+                            {award.level}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-4
+              ${data.awards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
+              <Star className={`${data.awards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
+              <p className={`font-serif italic text-[var(--theme-readable-primary)] ${data.awards.length > 8 ? 'text-xs' : 'text-sm'}`}>
+                “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + (hasHonorGroups ? honorPagesCount - 1 : 0)).padStart(2, '0')}</div>
+      </div>
+    )
+  ) : null;
 
   const RenderAvatar = ({ url, frameType, shape = AvatarShape.Circle, size = "w-48 h-48" }: { url: string, frameType: AvatarFrameType, shape?: AvatarShape, size?: string }) => {
     const getShapeStyles = (s: AvatarShape) => {
@@ -615,25 +766,25 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               <div className="flex justify-between items-start mb-12">
                 <div className="flex flex-col">
                   <div className="flex items-baseline gap-2 mb-[-10px]">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">Personal</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 text-[var(--theme-primary)]">Personal</span>
                   </div>
                   <div className="relative">
                     <div className="flex items-start">
-                      <span className="text-[120px] font-black leading-none text-[#8B2323] tracking-tighter">RE</span>
-                      <div className="flex flex-col mt-6 ml-2">
-                        <span className="text-4xl font-black tracking-[0.2em] text-dark">简历</span>
-                        <div className="h-1.5 w-12 bg-[#8B2323] mt-1"></div>
+                      <span className="text-[120px] font-black leading-none text-[var(--theme-primary)] tracking-tighter">RE</span>
+                      <div className="flex flex-col mt-5 ml-2">
+                        <span className="text-5xl font-black tracking-[0.2em] text-dark">简历</span>
+                        <div className="h-1.5 w-14 bg-[var(--theme-primary)] mt-1"></div>
                       </div>
                     </div>
                     <div className="mt-[-40px]">
-                      <span className="text-[100px] font-black leading-none text-[#8B2323] tracking-[0.1em]">SUME</span>
+                      <span className="text-[100px] font-black leading-none text-[var(--theme-primary)] tracking-[0.1em]">SUME</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Student Info */}
-              <div className="mb-16">
+              <div className="mb-16 relative" style={{ top: isHonorCoverDense ? 12 : 64 }}>
                 <h1 className="text-6xl font-black text-dark mb-4 tracking-tight">{data.basicInfo.name}</h1>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-3">
@@ -653,10 +804,12 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
                     <div className="absolute inset-[-15px] border-4 border-[var(--theme-primary)] opacity-20 transform rotate-2"></div>
                     <div className="absolute inset-[-10px] border-2 border-dark opacity-10 transform -rotate-1"></div>
                     
-                    <div className="w-full h-full overflow-hidden shadow-2xl relative z-10 rounded-sm">
-                      <SafeImage 
-                        src={data.basicInfo.avatarUrl} 
-                        className="w-full h-full object-cover object-top"
+                    <div className="w-full h-full overflow-hidden shadow-2xl relative z-10 rounded-sm flex items-center justify-center">
+                      <RenderAvatar 
+                        url={data.basicInfo.avatarUrl} 
+                        frameType={data.cover.avatarFrame} 
+                        shape={data.cover.avatarShape}
+                        size="w-full h-full"
                       />
                     </div>
                   </div>
@@ -664,19 +817,19 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
               )}
 
               {/* Awards List - Bottom Left */}
-              <div className="mt-auto max-w-[55%]">
+              <div className="mt-auto max-w-[55%] relative" style={{ top: -32 }}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="h-[2px] w-8 bg-[#8B2323]"></div>
-                  <span className="text-sm font-black uppercase tracking-[0.3em] text-[#8B2323]">Core Honors</span>
+                  <div className="h-[2px] w-8 bg-[var(--theme-primary)]"></div>
+                  <span className="text-sm font-black uppercase tracking-[0.3em] text-[var(--theme-primary)]">Core Honors</span>
                 </div>
                 <div className="space-y-3">
-                  {(data.honorGroups?.[0]?.awards || data.certificates.slice(0, 10)).slice(0, 10).map((award, idx) => (
+                  {top10Awards.map((award, idx) => (
                     <div key={idx} className="flex items-start gap-3">
                       <div className="mt-1.5 shrink-0">
-                        <div className="w-2 h-2 rotate-45 bg-[#8B2323]/40"></div>
+                        <div className="w-2 h-2 rotate-45 bg-[var(--theme-primary)]/40"></div>
                       </div>
                       <span className="text-[13px] font-bold text-dark/70 leading-snug">
-                        {typeof award === 'string' ? award : (award as any).name}
+                        {typeof award === 'string' ? award : (award.name || (award as any).caption || '未命名荣誉')}
                       </span>
                     </div>
                   ))}
@@ -685,7 +838,7 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
             </div>
 
             {/* Bottom Accent Line */}
-            <div className="absolute bottom-0 left-0 w-full h-4 bg-[#8B2323]"></div>
+            <div className="absolute bottom-0 left-0 w-full h-4 bg-[var(--theme-primary)]"></div>
           </div>
         ) : layout === LayoutType.Modern ? (
           // Modern Cover
@@ -1026,145 +1179,8 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
        </div>
      ))}
 
-     {/* ---------------- PAGE: HONORS ---------------- */}
-      {layout !== LayoutType.Honor && (
-        hasHonorGroups ? (
-          honorGroupPages.map((pageInfo, pageIdxInTotal) => {
-            const { group, pageAwards, pageIdx, totalPages, groupIdx } = pageInfo;
-            return (
-           <div key={`${group.id || groupIdx}-${pageIdx}`} className={`a4-page ${style.pageClass}`}>
-             <PageBackground />
-             <WatermarkOverlay />
-             <StorybookDecoration />
-             <div className={style.headerClass} style={style.headerStyle}>
-               <span className={style.titleClass}>荣誉汇总</span>
-               <span className={style.subTitleClass}>
-                 Honors & Awards - {group.category || `Category ${groupIdx + 1}`} 
-                 {totalPages > 1 ? ` (${pageIdx + 1}/${totalPages})` : ''}
-               </span>
-             </div>
-             <div className={style.contentPanelClass}>
-                <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2 h-full`}>
-                  <div className="space-y-6 flex flex-col justify-start">
-                     <div className="space-y-3">
-                        {group.category && pageIdx === 0 && (
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="h-[2px] w-6 bg-[var(--theme-primary)] opacity-50" />
-                            <span className="text-sm font-black text-[var(--theme-primary)] uppercase tracking-[0.2em]">
-                              {group.category}
-                            </span>
-                          </div>
-                        )}
-                        <div className="space-y-4">
-                          {pageAwards.map((award, i) => {
-                            const isCompact = pageAwards.length > 5;
-                            const isUltraCompact = pageAwards.length > 8;
-                            return (
-                              <div key={`${groupIdx}-${pageIdx}-${i}`} className="relative">
-                                <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
-                                <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
-                                  ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
-                                  <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
-                                  <div className="relative z-10 flex justify-between items-center">
-                                    <div className="flex flex-col min-w-0 flex-1 mr-4">
-                                      <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
-                                        {award.name || '未命名荣誉'}
-                                      </span>
-                                      <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
-                                        {award.date || '年份未知'}
-                                      </span>
-                                    </div>
-                                    {award.level && (
-                                      <span 
-                                        style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
-                                        className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
-                                          ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
-                                      >
-                                        {award.level}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                  </div>
-                  
-                  {pageIdx === totalPages - 1 && (
-                    <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-auto
-                      ${pageAwards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
-                      <Star className={`${pageAwards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
-                      <p className={`font-serif italic text-[var(--theme-readable-primary)] ${pageAwards.length > 8 ? 'text-xs' : 'text-sm'}`}>
-                        “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
-                      </p>
-                    </div>
-                  )}
-                </div>
-             </div>
-             <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + pageIdxInTotal).padStart(2, '0')}</div>
-           </div>
-         );
-       })
-     ) : (
-       <div className={`a4-page ${style.pageClass}`}>
-         <PageBackground />
-         <WatermarkOverlay />
-         <StorybookDecoration />
-         <div className={style.headerClass} style={style.headerStyle}>
-           <span className={style.titleClass}>荣誉汇总</span>
-           <span className={style.subTitleClass}>Honors & Awards</span>
-         </div>
-         <div className={style.contentPanelClass}>
-            <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2`}>
-              <div className="space-y-6 flex flex-col justify-start">
-                {data.awards.filter(a => a.name || a.date || a.level).map((award, i) => {
-                  const isCompact = data.awards.length > 5;
-                  const isUltraCompact = data.awards.length > 8;
-                  return (
-                    <div key={i} className="relative">
-                      <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
-                      <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
-                        ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
-                        <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
-                        <div className="relative z-10 flex justify-between items-center">
-                          <div className="flex flex-col min-w-0 flex-1 mr-4">
-                            <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
-                              {award.name || '未命名荣誉'}
-                            </span>
-                            <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
-                              {award.date || '年份未知'}
-                            </span>
-                          </div>
-                          {award.level && (
-                            <span 
-                              style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
-                              className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
-                                ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
-                            >
-                              {award.level}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-4
-                ${data.awards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
-                <Star className={`${data.awards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
-                <p className={`font-serif italic text-[var(--theme-readable-primary)] ${data.awards.length > 8 ? 'text-xs' : 'text-sm'}`}>
-                  “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
-                </p>
-              </div>
-            </div>
-         </div>
-         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + (hasHonorGroups ? honorPagesCount - 1 : 0)).padStart(2, '0')}</div>
-       </div>
-     )}
+    {/* ---------------- PAGE: HONORS ---------------- */}
+    {honorsSection}
 
      {/* ---------------- CERTIFICATES ---------------- */}
      {certPages.map((pageCerts, pageIndex) => (
@@ -1622,11 +1638,10 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(({ data, sc
         </>
       )}
       <div className="absolute bottom-4 right-8 text-xs text-white/60 z-30 font-bold tracking-widest print:text-gray-800">
-        {String(qualityPages.length + certPages.length + portfolioOffset + socialPracticeOffset + (data.recommendationLetterImage ? 6 : 5)).padStart(2, '0')}
+        {String(qualityPages.length + honorPagesCount + certPages.length + portfolioOffset + socialPracticeOffset + (data.recommendationLetterImage ? 6 : 5)).padStart(2, '0')}
       </div>
     </div>
-
-    </div>
+  </div>
   );
 });
 

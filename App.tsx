@@ -322,6 +322,7 @@ const migrateData = (data: any): ResumeData => {
   if (!Array.isArray(newData.qualityReports)) newData.qualityReports = [];
   if (!newData.family || !Array.isArray(newData.family)) newData.family = [];
   if (!newData.awards || !Array.isArray(newData.awards)) newData.awards = [];
+  if (!newData.honorGroups || !Array.isArray(newData.honorGroups)) newData.honorGroups = [];
 
   // Migrate Certificates (string[] -> ImageItem[])
   newData.certificates = newData.certificates.map((item: any, index: number) => {
