@@ -186,8 +186,8 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
   const combinedCertificates = [...(data.certificates || []), ...allHonorImages];
   const certPages = chunk<ImageItem>(combinedCertificates, 4);
   
-  const showPortfolio = !!(data.portfolio.website || (data.portfolio.images && data.portfolio.images.length > 0));
-  const showSocialPractice = !!(data.socialPractice.content || (data.socialPractice.images && data.socialPractice.images.length > 0));
+  const showPortfolio = !!(data.portfolio.website?.trim() || (data.portfolio.images && data.portfolio.images.length > 0));
+  const showSocialPractice = !!(data.socialPractice.content?.trim() || (data.socialPractice.images && data.socialPractice.images.length > 0));
   const portfolioOffset = showPortfolio ? 1 : 0;
   const socialPracticeOffset = showSocialPractice ? 1 : 0;
   const recommendationOffset = data.recommendationLetterImage ? 1 : 0;
@@ -1482,7 +1482,8 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                     <div className="flex flex-col text-left text-black">
                       {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
                         <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
-                          {/* 段落首行缩进：1个格子 (原为2个，左移一格) */}
+                          {/* 段落首行缩进：2个格子 */}
+                          <div className="h-[38px]"></div>
                           <div className="h-[38px]"></div>
                           {paragraph.split('').map((char, i) => (
                             <div key={i} className="h-[38px] flex items-center justify-center leading-none">
