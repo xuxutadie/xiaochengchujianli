@@ -5,9 +5,10 @@ import {
   Trophy, Heart, Palette, Camera, Layout, Settings, BookOpen, 
   MessageSquare, UserCircle, Star, School, Calendar, Upload,
   Frame, Square, Circle, Hexagon, Shield, Loader2, Ticket, Scissors, Smile,
-  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool, AlertTriangle, Cloud
+  Users, CheckCircle, ClipboardCheck, Award as AwardIcon, FileText, PenTool, AlertTriangle, Cloud,
+  Layers, Grid
 } from 'lucide-react';
-import { ResumeData, FamilyMember, Award, AvatarFrameType, AvatarShape, HobbyShape } from '../types';
+import { ResumeData, FamilyMember, Award, AvatarFrameType, AvatarShape, HobbyShape, CertLayoutType, CertShapeType } from '../types';
 import { compressImage } from '../utils/imageUtils';
 import { polishContent, generateClosingMessage } from '../services/geminiService';
 
@@ -41,6 +42,21 @@ const HOBBY_SHAPES = [
   { id: HobbyShape.Square, name: '方圆', icon: Square },
   { id: HobbyShape.Diamond, name: '菱形', icon: Layout },
   { id: HobbyShape.Hexagon, name: '六边形', icon: Hexagon },
+];
+
+const CERT_LAYOUTS = [
+  { id: CertLayoutType.Grid, name: '经典网格', icon: Layout },
+  { id: CertLayoutType.Stack, name: '错落堆叠', icon: Layers },
+  { id: CertLayoutType.Waterfall, name: '瀑布流', icon: Grid },
+  { id: CertLayoutType.Highlight, name: '重点展示', icon: Star },
+  { id: CertLayoutType.Fan, name: '扇形排列', icon: Sparkles },
+];
+
+const CERT_SHAPES = [
+  { id: CertShapeType.Classic, name: '经典直角', icon: Square },
+  { id: CertShapeType.Rounded, name: '柔和圆角', icon: Circle },
+  { id: CertShapeType.Stamp, name: '邮票锯齿', icon: Ticket },
+  { id: CertShapeType.Paper, name: '撕纸边沿', icon: Scissors },
 ];
 
 const SectionHeader = ({ icon: Icon, title, description, isOpen, onToggle, onAiAssist }: { 
@@ -361,6 +377,13 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
         // 默认参数已在 imageUtils 中优化，此处使用更轻量的参数提速
         const processedBase64 = await compressImage(base64Image, 1280, 1280, 0.75);
         
+        // 获取图片的宽高比
+        const img = new Image();
+        const aspectRatio = await new Promise<number>((resolve) => {
+          img.onload = () => resolve(img.width / img.height);
+          img.src = processedBase64;
+        });
+
         let finalUrl = processedBase64;
 
         // 2. 尝试上传到后端服务器 (Zeabur 50G 存储)
@@ -401,21 +424,24 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
           const newItem = {
             id: Date.now().toString(),
             url: finalUrl,
-            caption: '素质报告'
+            caption: '素质报告',
+            aspectRatio
           };
           onChange({ ...data, qualityReports: [...data.qualityReports, newItem] });
         } else if (uploadType === 'awards') {
           const newItem = {
-            id: Date.now().toString(),
+            id: `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             url: finalUrl,
-            caption: '证书名称'
+            caption: '证书名称',
+            aspectRatio
           };
           onChange({ ...data, certificates: [...data.certificates, newItem] });
         } else if (uploadType === 'honorGroup' && uploadingGroupId) {
           const newItem = {
-            id: Date.now().toString(),
+            id: `honor-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             url: finalUrl,
-            caption: '奖状/图片'
+            caption: '奖状/图片',
+            aspectRatio
           };
           const newGroups = data.honorGroups?.map(group => {
             if (group.id === uploadingGroupId) {
@@ -434,7 +460,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
           const newItem = {
             id: Date.now().toString(),
             url: finalUrl,
-            caption: '爱好照片'
+            caption: '爱好照片',
+            aspectRatio
           };
           const newImages = [...data.hobbies.images, newItem];
           updateNested('hobbies', 'images', newImages);
@@ -453,7 +480,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
           const newItem = {
             id: Date.now().toString(),
             url: finalUrl,
-            caption: '社会实践'
+            caption: '社会实践',
+            aspectRatio
           };
           const newImages = [...data.socialPractice.images, newItem];
           updateNested('socialPractice', 'images', newImages);
@@ -466,7 +494,8 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
           const newItem = {
             id: Date.now().toString(),
             url: finalUrl,
-            caption: '作品名称'
+            caption: '作品名称',
+            aspectRatio
           };
           const newImages = [...data.portfolio.images, newItem];
           updateNested('portfolio', 'images', newImages);
@@ -1331,21 +1360,60 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) =>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between ml-1">
+                <div className="flex items-center justify-between ml-1 bg-[#1c1c1e] p-6 rounded-[32px] border border-white/5 mb-8">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-black text-[var(--theme-label)] opacity-90 uppercase tracking-[0.2em]">荣誉分类汇总</label>
                     <span className="text-[9px] text-accent font-bold uppercase">Categorized Honors</span>
                   </div>
-                  <button 
-                    onClick={() => {
-                      const newGroup = { id: Date.now().toString(), category: '', awards: [], images: [] };
-                      onChange({ ...data, honorGroups: [...(data.honorGroups || []), newGroup] });
-                    }}
-                    className="flex items-center gap-2.5 px-6 py-3.5 bg-accent text-[#1A1C1E] rounded-[32px] text-[13px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent/20"
-                  >
-                    <Plus size={18} />
-                    添加荣誉分类
-                  </button>
+                  <div className="flex items-center gap-4">
+                    {/* 证书布局选择 */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[8px] font-black text-white/30 uppercase tracking-widest ml-1">排列布局 Layout</span>
+                      <div className="flex items-center gap-2 bg-black/40 p-1 rounded-[20px] border border-white/5">
+                        {CERT_LAYOUTS.map(l => (
+                          <button
+                            key={l.id}
+                            type="button"
+                            onClick={() => onChange({ ...data, certLayout: l.id })}
+                            className={`px-3 py-1.5 rounded-[16px] text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${data.certLayout === l.id ? 'bg-accent text-[#1A1C1E] shadow-lg shadow-accent/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                            title={l.name}
+                          >
+                            <l.icon size={12} />
+                            <span className="hidden lg:inline">{l.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* 证书形状选择 */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[8px] font-black text-white/30 uppercase tracking-widest ml-1">卡片形状 Shape</span>
+                      <div className="flex items-center gap-2 bg-black/40 p-1 rounded-[20px] border border-white/5">
+                        {CERT_SHAPES.map(s => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => onChange({ ...data, certShape: s.id })}
+                            className={`px-3 py-1.5 rounded-[16px] text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${data.certShape === s.id ? 'bg-accent text-[#1A1C1E] shadow-lg shadow-accent/20' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                            title={s.name}
+                          >
+                            <s.icon size={12} />
+                            <span className="hidden lg:inline">{s.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const newGroup = { id: Date.now().toString(), category: '', awards: [], images: [] };
+                        onChange({ ...data, honorGroups: [...(data.honorGroups || []), newGroup] });
+                      }}
+                      className="flex items-center gap-2.5 px-6 py-3.5 bg-accent text-[#1A1C1E] rounded-[32px] text-[13px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent/20 mt-3"
+                    >
+                      <Plus size={18} />
+                      添加分类
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-12">

@@ -1,6 +1,6 @@
-import React, { forwardRef, useState } from 'react';
-import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape, LayoutType } from '../types';
-import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare, AlertTriangle } from 'lucide-react';
+import React, { forwardRef, useState, useEffect, useCallback } from 'react';
+import { ResumeData, ThemeType, HobbyShape, ImageItem, AvatarFrameType, AvatarShape, LayoutType, CertLayoutType, CertShapeType } from '../types';
+import { Phone, MapPin, Award, BookOpen, User, Users, Star, Quote, Heart, FileText, Palette, Scissors, Ticket, Smile, Mail, MessageSquare, AlertTriangle, Layers, RotateCcw, RotateCw, Plus, Minus } from 'lucide-react';
 
 interface ResumePreviewProps {
   data: ResumeData;
@@ -8,6 +8,7 @@ interface ResumePreviewProps {
   layoutMode?: 'single' | 'grid';
   isPrinting?: boolean;
   showWatermark?: boolean;
+  onChange?: (data: ResumeData) => void;
 }
 
 function chunk<T>(arr: T[] | undefined | null, size: number): T[][] {
@@ -34,8 +35,110 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
     scale = 1, 
     layoutMode = 'single', 
     isPrinting = false, 
-    showWatermark = false 
+    showWatermark = false,
+    onChange
   } = props;
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number, y: number, itemX: number, itemY: number, pageRect: DOMRect } | null>(null);
+  const [resizeStart, setResizeStart] = useState<{ x: number, y: number, scale: number } | null>(null);
+  const [rotateStart, setRotateStart] = useState<{ x: number, y: number, rotation: number } | null>(null);
+
+  const handleUpdateItem = useCallback((id: string, updates: Partial<ImageItem>) => {
+    if (!onChange) return;
+    
+    // 1. 尝试在 data.certificates 中查找并更新
+    let itemFound = false;
+    const newCertificates = (data.certificates || []).map(c => {
+      if (c.id === id) {
+        itemFound = true;
+        return { ...c, ...updates };
+      }
+      return c;
+    });
+
+    if (itemFound) {
+      onChange({ ...data, certificates: newCertificates });
+      return;
+    }
+
+    // 2. 尝试在 data.honorGroups 中查找并更新
+    const newGroups = (data.honorGroups || []).map(group => ({
+      ...group,
+      images: (group.images || []).map(img => {
+        if (img.id === id) {
+          itemFound = true;
+          return { ...img, ...updates };
+        }
+        return img;
+      })
+    }));
+
+    if (itemFound) {
+      onChange({ ...data, honorGroups: newGroups });
+    }
+  }, [data, onChange]);
+
+  const adjustItemScale = useCallback((id: string, currentScale: number | undefined, delta: number) => {
+    const nextScale = Math.max(0.1, Math.min(3, (currentScale || 1) + delta));
+    handleUpdateItem(id, { scale: nextScale });
+  }, [handleUpdateItem]);
+
+  const adjustItemRotation = useCallback((id: string, currentRotation: number | undefined, delta: number) => {
+    handleUpdateItem(id, { rotation: (currentRotation || 0) + delta });
+  }, [handleUpdateItem]);
+
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!activeId) return;
+
+      if (dragStart) {
+        e.preventDefault();
+        const { x, y, itemX, itemY, pageRect } = dragStart;
+        const currentX = (e.clientX - pageRect.left) / scale;
+        const currentY = (e.clientY - pageRect.top) / scale;
+        const dx = currentX - x;
+        const dy = currentY - y;
+        
+        handleUpdateItem(activeId, { 
+          x: itemX + (dx / pageRect.width) * 100, 
+          y: itemY + (dy / pageRect.height) * 100 
+        });
+      } else if (resizeStart) {
+        e.preventDefault();
+        const { x: startMouseX, y: startMouseY, scale: startScale } = resizeStart;
+        const dx = e.clientX - startMouseX;
+        const dy = e.clientY - startMouseY;
+        const movement = (dx + dy) / 2;
+        const delta = movement / (150 * scale);
+        const newScale = Math.max(0.1, Math.min(3, startScale + delta));
+        handleUpdateItem(activeId, { scale: newScale });
+      } else if (rotateStart) {
+        e.preventDefault();
+        const { x: startX, y: startY, rotation: startRotation } = rotateStart;
+        // 计算鼠标移动相对于起始点的水平位移来调整角度
+        const dx = e.clientX - startX;
+        const newRotation = startRotation + dx * 0.5; // 每像素 0.5 度
+        handleUpdateItem(activeId, { rotation: newRotation });
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setDragStart(null);
+      setResizeStart(null);
+      setRotateStart(null);
+    };
+
+    if (dragStart || resizeStart || rotateStart) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [activeId, dragStart, resizeStart, rotateStart, scale, handleUpdateItem]);
   
   const getThemeStyles = () => {
     const baseColor = data.themeColor || '#D9F217';
@@ -72,6 +175,8 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
       [ThemeType.ChineseRed]: 'linear-gradient(135deg, #a8071a, #cf1322)',
       [ThemeType.ChineseGold]: 'linear-gradient(135deg, #874d00, #d4b106)',
       [ThemeType.ChineseJade]: 'linear-gradient(135deg, #237804, #73d13d)',
+      [ThemeType.ChineseCyanGreen]: 'linear-gradient(135deg, #1abc9c, #16a085)',
+      [ThemeType.ChineseDeepCyan]: 'linear-gradient(135deg, #16a085, #00474f)',
       
       // 欧美复古系列
       [ThemeType.RetroBrown]: 'linear-gradient(135deg, #873800, #ad4e00)',
@@ -184,7 +289,12 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
 
   // 合并旧的证书和新的分类证书（为了兼容性）
   const combinedCertificates = [...(data.certificates || []), ...allHonorImages];
-  const certPages = chunk<ImageItem>(combinedCertificates, 4);
+  
+  // 根据布局决定每页切分数量
+  const certItemsPerPage = data.certLayout === CertLayoutType.Grid ? 4 : 
+                          data.certLayout === CertLayoutType.Highlight ? 4 :
+                          data.certLayout === CertLayoutType.Stack ? 3 : 5;
+  const certPages = chunk<ImageItem>(combinedCertificates, certItemsPerPage);
   
   const showPortfolio = !!(data.portfolio.website?.trim() || (data.portfolio.images && data.portfolio.images.length > 0));
   const showSocialPractice = !!(data.socialPractice.content?.trim() || (data.socialPractice.images && data.socialPractice.images.length > 0));
@@ -1183,34 +1293,214 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
     {honorsSection}
 
      {/* ---------------- CERTIFICATES ---------------- */}
-     {certPages.map((pageCerts, pageIndex) => (
-       <div key={`cert-${pageIndex}`} className={`a4-page ${style.pageClass}`}>
-         <PageBackground />
-         <WatermarkOverlay />
-         <StorybookDecoration />
-         <div className={style.headerClass} style={style.headerStyle}>
-           <span className={style.titleClass}>证书展示</span>
-           <span className={style.subTitleClass}>Certificates {pageIndex + 1}</span>
-         </div>
-         <div className={style.contentPanelClass + " justify-center"}>
-          <div className="grid grid-cols-2 grid-rows-2 gap-8 flex-1 min-h-0 overflow-hidden">
-            {pageCerts.map((item, i) => (
-               <div key={i} className={`${style.imageContainerClass} flex flex-col min-h-0 overflow-hidden !max-h-[350px]`}>
-                 <div className="flex-1 bg-[var(--theme-secondary)]/30 flex items-center justify-center p-2 min-h-0">
-                   <SafeImage src={item.url} className="max-w-full max-h-full object-contain shadow-sm" style={{ width: 'auto', height: 'auto' }} />
-                 </div>
-                 {item.caption && (
-                    <div className="text-center text-[10px] font-black text-[var(--theme-readable-primary)] bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] py-2 px-4 shrink-0 border-t border-[var(--theme-primary)]/10">
-                      {item.caption}
-                    </div>
-                 )}
-               </div>
-             ))}
+     {certPages.map((pageCerts, pageIndex) => {
+       const layout = data.certLayout || CertLayoutType.Grid;
+       const shape = data.certShape || CertShapeType.Classic;
+
+       const getShapeClass = () => {
+         switch(shape) {
+           case CertShapeType.Rounded: return 'rounded-[2rem] overflow-hidden';
+           case CertShapeType.Stamp: return 'rounded-sm [clip-path:polygon(0%_5%,5%_5%,5%_0%,10%_0%,10%_5%,15%_5%,15%_0%,20%_0%,20%_5%,25%_5%,25%_0%,30%_0%,30%_5%,35%_5%,35%_0%,40%_0%,40%_5%,45%_5%,45%_0%,50%_0%,50%_5%,55%_5%,55%_0%,60%_0%,60%_5%,65%_5%,65%_0%,70%_0%,70%_5%,75%_5%,75%_0%,80%_0%,80%_5%,85%_5%,85%_0%,90%_0%,90%_5%,95%_5%,95%_0%,100%_0%,100%_5%,100%_10%,95%_10%,95%_15%,100%_15%,100%_20%,95%_20%,95%_25%,100%_25%,100%_30%,95%_30%,95%_35%,100%_35%,100%_40%,95%_40%,95%_45%,100%_45%,100%_50%,95%_50%,95%_55%,100%_55%,100%_60%,95%_60%,95%_65%,100%_65%,100%_70%,95%_70%,95%_75%,100%_75%,100%_80%,95%_80%,95%_85%,100%_85%,100%_90%,95%_90%,95%_95%,100%_95%,100%_100%,95%_100%,95%_95%,90%_95%,90%_100%,85%_100%,85%_95%,80%_95%,80%_100%,75%_100%,75%_95%,70%_95%,70%_100%,65%_100%,65%_95%,60%_95%,60%_100%,55%_100%,55%_95%,50%_95%,50%_100%,45%_100%,45%_95%,40%_95%,40%_100%,35%_100%,35%_95%,30%_95%,30%_100%,25%_100%,25%_95%,20%_95%,20%_100%,15%_100%,15%_95%,10%_95%,10%_100%,5%_100%,5%_95%,0%_95%,0%_90%,5%_90%,5%_85%,0%_85%,0%_80%,5%_80%,5%_75%,0%_75%,0%_70%,5%_70%,5%_65%,0%_65%,0%_60%,5%_60%,5%_55%,0%_55%,0%_50%,5%_50%,5%_45%,0%_45%,0%_40%,5%_40%,5%_35%,0%_35%,0%_30%,5%_30%,5%_25%,0%_25%,0%_20%,5%_20%,5%_15%,0%_15%,0%_10%,5%_10%,5%_5%,0%_5%)]';
+           case CertShapeType.Paper: return 'rounded-sm [clip-path:polygon(0%_0%,100%_0%,100%_95%,98%_100%,96%_94%,94%_100%,92%_95%,90%_100%,88%_94%,86%_100%,84%_95%,82%_100%,80%_94%,78%_100%,76%_95%,74%_100%,72%_94%,70%_100%,68%_95%,66%_100%,64%_94%,62%_100%,60%_95%,58%_100%,56%_94%,54%_100%,52%_95%,50%_100%,48%_94%,46%_100%,44%_95%,42%_100%,40%_94%,38%_100%,36%_95%,34%_100%,32%_94%,30%_100%,28%_95%,26%_100%,24%_94%,22%_100%,20%_95%,18%_100%,16%_94%,14%_100%,12%_95%,10%_100%,8%_94%,6%_100%,4%_95%,2%_100%,0%_94%)]';
+           default: return 'rounded-sm overflow-hidden';
+         }
+       };
+
+       return (
+         <div 
+           key={`cert-${pageIndex}`} 
+           className={`a4-page ${style.pageClass}`}
+           onClick={() => setActiveId(null)}
+         >
+           <PageBackground />
+           <WatermarkOverlay />
+           <StorybookDecoration />
+           <div className={style.headerClass} style={style.headerStyle}>
+             <span className={style.titleClass}>证书展示</span>
+             <span className={style.subTitleClass}>Certificates {pageIndex + 1}</span>
            </div>
+           <div className={style.contentPanelClass + " justify-center !p-10 relative overflow-hidden"}>
+             <div className={`
+               w-full h-full flex-1 min-h-0 relative
+               ${layout === CertLayoutType.Grid ? 'grid grid-cols-2 grid-rows-2 gap-8' : ''}
+               ${layout === CertLayoutType.Stack ? 'flex items-center justify-center' : ''}
+               ${layout === CertLayoutType.Waterfall ? 'columns-2 gap-6 space-y-6' : ''}
+               ${layout === CertLayoutType.Highlight ? 'grid grid-cols-3 grid-rows-3 gap-6' : ''}
+               ${layout === CertLayoutType.Fan ? 'flex items-center justify-center' : ''}
+             `}>
+               {pageCerts.map((item, i) => {
+                 let layoutStyle: React.CSSProperties = {
+                   transform: `
+                     translate(${item.x || 0}%, ${item.y || 0}%) 
+                     scale(${item.scale || 1}) 
+                     rotate(${item.rotation || 0}deg)
+                   `,
+                   zIndex: activeId === item.id ? 50 : 10,
+                   position: (layout === CertLayoutType.Stack || layout === CertLayoutType.Fan) ? 'absolute' : 'relative',
+                   transition: (dragStart || resizeStart) ? 'none' : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                 };
+
+                 if (layout === CertLayoutType.Stack) {
+                   const rotation = (i - (pageCerts.length - 1) / 2) * 8;
+                   const offset = (i - (pageCerts.length - 1) / 2) * 40;
+                   layoutStyle.transform = `translate(${item.x || 0}%, ${item.y || (offset / 10)}%) scale(${item.scale || 1}) rotate(${item.rotation || rotation}deg)`;
+                   layoutStyle.width = '80%';
+                   layoutStyle.zIndex = i;
+                 } else if (layout === CertLayoutType.Fan) {
+                   const angle = (i - (pageCerts.length - 1) / 2) * 20; // 扇形角度
+                   const radius = 120; // 扇形半径
+                   const rad = (angle - 90) * (Math.PI / 180);
+                   const fx = Math.cos(rad) * radius;
+                   const fy = Math.sin(rad) * radius + radius;
+                   layoutStyle.transform = `translate(${item.x || (fx / 5)}%, ${item.y || (fy / 10)}%) scale(${item.scale || 1}) rotate(${item.rotation || angle}deg)`;
+                   layoutStyle.width = '60%';
+                   layoutStyle.zIndex = i;
+                 } else if (layout === CertLayoutType.Highlight) {
+                   if (i === 0) layoutStyle.gridColumn = 'span 3', layoutStyle.gridRow = 'span 2';
+                 }
+
+                 if (activeId === item.id) layoutStyle.zIndex = 100;
+
+                 // 自适应横竖比例
+                 const isHorizontal = (item.aspectRatio || 1) > 1.1;
+                 const cardAspectClass = isHorizontal ? 'aspect-[4/3]' : 'aspect-[3/4]';
+
+                 return (
+                   <div 
+                     key={item.id || i} 
+                     style={layoutStyle}
+                     className={`
+                       flex flex-col min-h-0 group/card
+                       ${getShapeClass()}
+                       ${cardAspectClass}
+                       ${layout !== CertLayoutType.Stack && layout !== CertLayoutType.Fan ? 'bg-[var(--theme-card)] shadow-xl' : 'shadow-2xl'}
+                       ${layout === CertLayoutType.Waterfall ? 'break-inside-avoid w-full' : ''}
+                       ${activeId === item.id ? 'ring-4 ring-accent ring-offset-4 z-50' : ''}
+                       cursor-move
+                     `}
+                     onMouseDown={(e) => {
+                       if (isPrinting) return;
+                       e.stopPropagation();
+                       setActiveId(item.id);
+                       const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+                       if (rect) {
+                         setDragStart({ 
+                           x: (e.clientX - rect.left) / scale, 
+                           y: (e.clientY - rect.top) / scale,
+                           itemX: item.x || 0,
+                           itemY: item.y || 0,
+                           pageRect: rect
+                         });
+                       }
+                     }}
+                   >
+                     <div className="flex-1 bg-[var(--theme-secondary)]/30 flex items-center justify-center p-2 min-h-0 relative">
+                       <SafeImage 
+                         src={item.url} 
+                         className="max-w-full max-h-full object-contain pointer-events-none" 
+                         style={{ width: 'auto', height: 'auto' }} 
+                       />
+                       
+                      {!isPrinting && activeId === item.id && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-[120]">
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/85 text-[#1A1C1E] shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateItem(item.id, { scale: Math.max(0.1, (item.scale || 1) - 0.1) });
+                            }}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-accent text-[#1A1C1E] shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateItem(item.id, { scale: Math.min(3, (item.scale || 1) + 0.1) });
+                            }}
+                          >
+                            <Plus size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/85 text-[#1A1C1E] shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateItem(item.id, { rotation: (item.rotation || 0) - 5 });
+                            }}
+                          >
+                            <RotateCcw size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/85 text-[#1A1C1E] shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateItem(item.id, { rotation: (item.rotation || 0) + 5 });
+                            }}
+                          >
+                            <RotateCw size={14} />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* 操作手柄 */}
+                       {!isPrinting && activeId === item.id && (
+                         <>
+                           {/* 缩放手柄 - 右下角 */}
+                           <div 
+                             className="absolute bottom-2 right-2 w-8 h-8 bg-accent rounded-full flex items-center justify-center cursor-nwse-resize shadow-xl z-[110] hover:scale-110 active:scale-90 transition-transform"
+                             onMouseDown={(e) => {
+                               if (isPrinting) return;
+                               e.stopPropagation();
+                               setActiveId(item.id);
+                               setResizeStart({ x: e.clientX, y: e.clientY, scale: item.scale || 1 });
+                               setDragStart(null);
+                               setRotateStart(null);
+                             }}
+                           >
+                             <Layers size={14} className="text-[#1A1C1E]" />
+                           </div>
+
+                           {/* 旋转手柄 - 顶部中央 */}
+                           <div 
+                             className="absolute -top-10 left-1/2 -translate-x-1/2 w-8 h-8 bg-white/20 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center cursor-alias shadow-xl z-[110] hover:bg-accent/80 hover:scale-110 active:scale-90 transition-all"
+                             onMouseDown={(e) => {
+                               if (isPrinting) return;
+                               e.stopPropagation();
+                               setActiveId(item.id);
+                               setRotateStart({ x: e.clientX, y: e.clientY, rotation: item.rotation || 0 });
+                               setDragStart(null);
+                               setResizeStart(null);
+                             }}
+                           >
+                             <Smile size={16} className="text-white" />
+                             {/* 连接线 */}
+                             <div className="absolute top-full w-px h-10 bg-white/30"></div>
+                           </div>
+                         </>
+                       )}
+                     </div>
+                     {item.caption && (
+                        <div className="text-center text-[10px] font-black text-[var(--theme-readable-primary)] bg-gradient-to-br from-[var(--theme-secondary)] to-[var(--theme-card)] py-2 px-4 shrink-0 border-t border-[var(--theme-primary)]/10">
+                          {item.caption}
+                        </div>
+                     )}
+                   </div>
+                 );
+               })}
+             </div>
+           </div>
+           <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + honorPagesCount + pageIndex).padStart(2, '0')}</div>
          </div>
-         <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + honorPagesCount + pageIndex).padStart(2, '0')}</div>
-       </div>
-     ))}
+       );
+     })}
 
      {/* ---------------- PAGE: PORTFOLIO ---------------- */}
      {showPortfolio && (

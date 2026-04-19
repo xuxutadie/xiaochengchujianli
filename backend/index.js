@@ -267,6 +267,27 @@ app.get('/api/resume/load/:code', async (req, res) => {
   }
 });
 
+// 3. 按姓名搜索简历（找回验证码）
+app.get('/api/resume/search/:name', async (req, res) => {
+  const { name } = req.params;
+  if (!name || name.length < 2) {
+    return res.status(400).json({ success: false, message: '姓名太短' });
+  }
+
+  try {
+    // 在 JSONB 数据中搜索姓名
+    const result = await pool.query(
+      "SELECT code, updated_at FROM resume_data WHERE data->'basicInfo'->>'name' ILIKE $1",
+      [`%${name}%`]
+    );
+
+    res.json({ success: true, results: result.rows });
+  } catch (err) {
+    console.error('Search resume error:', err);
+    res.status(500).json({ success: false, message: '搜索失败' });
+  }
+});
+
 // Admin endpoint to get stats
 app.post('/api/admin/stats', async (req, res) => {
   const { adminKey } = req.body;

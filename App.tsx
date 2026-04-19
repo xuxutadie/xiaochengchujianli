@@ -6,7 +6,7 @@ import ResumePreview from './components/ResumePreview';
 import ThemeSelector from './components/ThemeSelector';
 import LayoutSelector from './components/LayoutSelector';
 import AdminDashboard from './components/AdminDashboard';
-import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket, Settings, Edit, Eye } from 'lucide-react';
+import { Printer, Save, RotateCcw, AlertCircle, Loader2, Download, Layout, LayoutGrid, Columns, X, CheckCircle2, CreditCard, QrCode, FileText, Star, UserPlus, Ticket, Settings, Edit, Eye, Search, RefreshCcw } from 'lucide-react';
 
 const STORAGE_KEY = 'smart-resume-kid-data-v1';
 
@@ -427,6 +427,55 @@ function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isGeneratingTempCode, setIsGeneratingTempCode] = useState(false);
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [searchResults, setSearchResults] = useState<{code: string, updated_at: string}[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearchByName = async () => {
+    if (!searchName || searchName.length < 2) {
+      alert('请输入完整的姓名进行搜索');
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/resume/search/${encodeURIComponent(searchName)}`);
+      const result = await res.json();
+      if (result.success) {
+        setSearchResults(result.results);
+        if (result.results.length === 0) {
+          alert('未找到相关资料，请确认姓名是否正确，或您之前是否开启过“云端保存”');
+        }
+      } else {
+        alert('搜索失败：' + (result.message || '未知错误'));
+      }
+    } catch (e) {
+      console.error('搜索失败:', e);
+      alert('搜索失败，请检查网络连接');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleLoadByCode = async (code: string) => {
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/resume/load/${code}`);
+      const result = await res.json();
+      if (result.success && result.data) {
+        const migrated = migrateData(result.data);
+        setData({ ...migrated, verificationCode: code });
+        setShowRecoverModal(false);
+        alert('资料恢复成功！');
+      } else {
+        alert('加载失败：' + (result.message || '未找到数据'));
+      }
+    } catch (e) {
+      console.error('加载失败:', e);
+      alert('加载失败，请重试');
+    }
+  };
 
   const getBackendUrl = () => {
     let url = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
@@ -713,25 +762,39 @@ function App() {
         </div>
         <div className="relative z-10 flex items-center gap-2">
           {!data.verificationCode && (
-            <button 
-              onClick={handleGenerateTempCode}
-              disabled={isGeneratingTempCode}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 active:scale-90 ${
-                isGeneratingTempCode 
-                  ? 'bg-gray-500 text-white cursor-wait' 
-                  : data.darkMode 
-                    ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30' 
-                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
-              }`}
-              title="启用云端保存，支持跨设备同步"
-            >
-              {isGeneratingTempCode ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Save size={14} />
-              )}
-              {isGeneratingTempCode ? '生成中...' : '云端保存'}
-            </button>
+            <div className="flex gap-1.5">
+              <button 
+                onClick={handleGenerateTempCode}
+                disabled={isGeneratingTempCode}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 active:scale-90 ${
+                  isGeneratingTempCode 
+                    ? 'bg-gray-500 text-white cursor-wait' 
+                    : data.darkMode 
+                      ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30' 
+                      : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+                title="启用云端保存，支持跨设备同步"
+              >
+                {isGeneratingTempCode ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                {isGeneratingTempCode ? '生成中...' : '云端保存'}
+              </button>
+              <button 
+                onClick={() => setShowRecoverModal(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all duration-300 active:scale-90 ${
+                  data.darkMode 
+                    ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30' 
+                    : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200'
+                }`}
+                title="按姓名找回云端存档"
+              >
+                <RefreshCcw size={14} />
+                找回资料
+              </button>
+            </div>
           )}
           {data.verificationCode && (
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border ${
@@ -901,6 +964,7 @@ function App() {
                 layoutMode={isPrinting ? 'single' : layoutMode} 
                 isPrinting={isPrinting}
                 showWatermark={isPro ? false : showWatermark} 
+                onChange={setData}
               />
            </div>
         </div>
@@ -939,6 +1003,72 @@ function App() {
           onClose={() => setShowPaymentModal(false)}
           onPrint={(pro) => handlePrint(!pro)}
         />
+      )}
+      {/* Recover Modal */}
+      {showRecoverModal && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md no-print">
+          <div className={`relative w-full max-w-md p-8 rounded-[32px] shadow-2xl transition-all duration-500 animate-in fade-in zoom-in ${data.darkMode ? 'bg-[#1c1c1e] text-white' : 'bg-white text-dark'}`}>
+            <button 
+              onClick={() => setShowRecoverModal(false)}
+              className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-amber-500">
+                <RefreshCcw size={32} />
+              </div>
+              <h3 className="text-2xl font-black mb-2">找回云端存档</h3>
+              <p className="text-sm opacity-60">如果您开启过“云端保存”，可以通过姓名找回</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="请输入您的完整姓名"
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchByName()}
+                  className={`w-full py-4 px-6 rounded-2xl border-2 transition-all outline-none ${data.darkMode ? 'bg-white/5 border-white/10 focus:border-amber-500/50' : 'bg-surface border-black/5 focus:border-amber-500/50'}`}
+                />
+                <button 
+                  onClick={handleSearchByName}
+                  disabled={isSearching}
+                  className="absolute right-3 top-3 bottom-3 px-4 bg-amber-500 text-white font-black rounded-xl shadow-lg shadow-amber-500/20 disabled:opacity-50 transition-all active:scale-95"
+                >
+                  {isSearching ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />}
+                </button>
+              </div>
+
+              {searchResults.length > 0 && (
+                <div className="mt-6 space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                  <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest px-2">找到以下存档：</p>
+                  {searchResults.map((result, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleLoadByCode(result.code)}
+                      className={`w-full p-4 rounded-2xl border-2 border-transparent hover:border-amber-500/30 transition-all text-left flex justify-between items-center group ${data.darkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-surface hover:bg-white shadow-sm'}`}
+                    >
+                      <div>
+                        <p className="font-black text-amber-500">存档 #{idx + 1}</p>
+                        <p className="text-[10px] opacity-40 mt-1">更新于: {new Date(result.updated_at).toLocaleString()}</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-all">
+                        <Download size={14} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-8 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-[11px] leading-relaxed opacity-60">
+              提示：只有在之前点击过“云端保存”并看到“临时保存”或“已保存”标识的资料才能在此找回。
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

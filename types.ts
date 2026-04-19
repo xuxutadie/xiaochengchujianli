@@ -22,6 +22,8 @@ export enum ThemeType {
   ChineseRed = 'chinese-red',
   ChineseGold = 'chinese-gold',
   ChineseJade = 'chinese-jade',
+  ChineseCyanGreen = 'chinese-cyangreen',
+  ChineseDeepCyan = 'chinese-deepcyan',
   
   // 欧美复古系列 (胶片感、怀旧渐变)
   RetroBrown = 'retro-brown',
@@ -84,6 +86,21 @@ export enum LayoutType {
   Honor = 'honor'
 }
 
+export enum CertLayoutType {
+  Grid = 'grid',           // 经典网格 (2x2)
+  Stack = 'stack',         // 错落堆叠
+  Waterfall = 'waterfall', // 瀑布流
+  Highlight = 'highlight', // 重点展示 (一大三小)
+  Fan = 'fan'              // 扇形排列
+}
+
+export enum CertShapeType {
+  Classic = 'classic',   // 经典直角
+  Rounded = 'rounded',   // 柔和圆角
+  Stamp = 'stamp',       // 邮票锯齿
+  Paper = 'paper'        // 撕纸边沿
+}
+
 export interface FamilyMember {
   id: string;
   relation: string;
@@ -103,6 +120,11 @@ export interface ImageItem {
   id: string;
   url: string; // base64
   caption: string;
+  x?: number; // X offset (%)
+  y?: number; // Y offset (%)
+  scale?: number; // Scaling factor (1 = 100%)
+  rotation?: number; // Rotation in degrees
+  aspectRatio?: number; // Width / Height
 }
 
 export interface HonorGroup {
@@ -169,6 +191,8 @@ export interface ResumeData {
   awards: Award[]; // Text summary
   awardsQuote?: string; // 可自定义的寄语
   certificates: ImageItem[]; // Array of image objects with captions
+  certLayout?: CertLayoutType; // 证书排列方式
+  certShape?: CertShapeType; // 证书卡片形状
   honorGroups?: HonorGroup[]; // 分类荣誉汇总
 
   // Page: Hobbies
@@ -258,6 +282,8 @@ export const INITIAL_RESUME_DATA: ResumeData = {
   ],
   awardsQuote: '每一份荣誉都是汗水的结晶',
   certificates: [],
+  certLayout: CertLayoutType.Grid,
+  certShape: CertShapeType.Classic,
   honorGroups: [
     {
       id: '1',
