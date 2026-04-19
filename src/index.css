@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-surface: #F8F9FB;
+    --color-dark: #1A1C1E;
+    --color-accent: #D9F217;
+  }
+}
+
+@layer utilities {
+  .text-surface { color: var(--color-surface); }
+  .bg-surface { background-color: var(--color-surface); }
+  .text-dark { color: var(--color-dark); }
+  .bg-dark { background-color: var(--color-dark); }
+  .text-accent { color: var(--color-accent); }
+  .bg-accent { background-color: var(--color-accent); }
+  .border-accent { border-color: var(--color-accent); }
+}
