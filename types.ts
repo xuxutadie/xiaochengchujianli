@@ -24,6 +24,7 @@ export enum ThemeType {
   ChineseJade = 'chinese-jade',
   ChineseCyanGreen = 'chinese-cyangreen',
   ChineseDeepCyan = 'chinese-deepcyan',
+  ChineseTurquoise = 'chinese-turquoise',
   
   // 欧美复古系列 (胶片感、怀旧渐变)
   RetroBrown = 'retro-brown',

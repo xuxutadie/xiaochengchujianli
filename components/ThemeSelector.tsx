@@ -48,6 +48,7 @@ const themeCategories = [
       { id: ThemeType.ChineseJade, name: '翡翠绿', color: '#237804' },
       { id: ThemeType.ChineseCyanGreen, name: '千里青绿', color: '#1abc9c' },
       { id: ThemeType.ChineseDeepCyan, name: '石青墨绿', color: '#16a085' },
+      { id: ThemeType.ChineseTurquoise, name: '翠玉青蓝', color: '#00FFCC' },
     ]
   },
   {
