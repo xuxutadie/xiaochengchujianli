@@ -1,12 +1,10 @@
 {
-  "name": "cv-frontend",
-  "docker": {
-    "dockerfile": "Dockerfile"
-  },
-  "ports": [
+  "services": [
     {
-      "port": 80,
-      "protocol": "HTTP"
+      "name": "xiaoshengchujianli",
+      "type": "static",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist"
     }
   ]
 }
