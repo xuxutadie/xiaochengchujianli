@@ -2,5 +2,11 @@
   "name": "cv-frontend",
   "docker": {
     "dockerfile": "Dockerfile"
-  }
+  },
+  "ports": [
+    {
+      "port": 80,
+      "protocol": "HTTP"
+    }
+  ]
 }
