@@ -1,0 +1,6 @@
+{
+  "name": "cv-frontend",
+  "docker": {
+    "dockerfile": "Dockerfile"
+  }
+}
