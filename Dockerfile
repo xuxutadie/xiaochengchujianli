@@ -1,15 +1,20 @@
 # Build stage
-FROM node:18 AS build
+FROM node:18-buster AS build
 
 WORKDIR /app
 
 COPY package*.json ./
 
-# Install npm dependencies with forced platform and ignoring optional issues
-RUN npm install --no-optional || npm install --force
-RUN npm rebuild @swc/core || true
+# Install build dependencies
+RUN apt-get update && apt-get install -y build-essential python3
+
+# Install npm dependencies
+RUN npm install
 
 COPY . .
+
+# Force rebuild of native modules
+RUN npm rebuild
 
 RUN npm run build
 
