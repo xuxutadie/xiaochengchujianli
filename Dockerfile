@@ -8,7 +8,9 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+# Install npm dependencies with forced platform and ignoring optional issues
+RUN npm install --no-optional || npm install --force
+RUN npm rebuild @swc/core || true
 
 COPY . .
 
