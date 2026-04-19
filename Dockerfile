@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-buster AS build
+FROM node:18-bookworm AS build
 
 WORKDIR /app
 
