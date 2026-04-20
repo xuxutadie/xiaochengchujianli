@@ -310,8 +310,9 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
   // 计算荣誉汇总页数：
   // 逻辑：如果开启了分类，每个分类根据 10 条/页进行分页
   const hasHonorGroups = data.honorGroups && data.honorGroups.length > 0;
+  const isAwardsOpen = openSections ? openSections.includes('awards') : true;
   
-  const honorGroupPages = hasHonorGroups ? data.honorGroups!.flatMap((group, groupIdx) => {
+  const honorGroupPages = (hasHonorGroups && isAwardsOpen) ? data.honorGroups!.flatMap((group, groupIdx) => {
     const validAwards = group.awards.filter(a => a.name || a.date || a.level);
     const paginatedAwards = chunk(validAwards, 10);
     // 如果该分类没有任何有效奖项，至少保留一页占位
@@ -327,13 +328,13 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
     }));
   }) : [];
 
-  const honorPagesCount = layout === LayoutType.Honor ? 0 : (hasHonorGroups ? honorGroupPages.length : 1);
+  const honorPagesCount = (!isAwardsOpen || layout === LayoutType.Honor) ? 0 : (hasHonorGroups ? honorGroupPages.length : Math.max(1, Math.ceil(data.awards.filter(a => a.name || a.date || a.level).length / 10)));
 
   // 智能目录项生成
   const tocItems = [
     { title: '基本档案', subtitle: 'Profile & Growth', page: 2, icon: <User size={18} /> },
     ...(qualityPages.length > 0 ? [{ title: '素质表现', subtitle: 'Evaluation', page: 3, icon: <BookOpen size={18} /> }] : []),
-    ...(layout !== LayoutType.Honor ? [{ title: '荣誉汇总', subtitle: 'Honors & Awards', page: 3 + qualityPages.length, icon: <Award size={18} /> }] : []),
+    ...(isAwardsOpen && layout !== LayoutType.Honor ? [{ title: '荣誉汇总', subtitle: 'Honors & Awards', page: 3 + qualityPages.length, icon: <Award size={18} /> }] : []),
     ...(certPages.length > 0 ? [{ title: '证书展示', subtitle: 'Certificates', page: 3 + qualityPages.length + honorPagesCount, icon: <FileText size={18} /> }] : []),
     ...(showPortfolio ? [{ title: '个人作品集', subtitle: 'Portfolio', page: 3 + qualityPages.length + honorPagesCount + certPages.length, icon: <Palette size={18} /> }] : []),
     { title: '兴趣与特长', subtitle: 'Hobbies', page: 3 + qualityPages.length + honorPagesCount + certPages.length + portfolioOffset, icon: <Heart size={18} /> },
@@ -440,7 +441,7 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
     );
   };
 
-  const honorsSection = layout !== LayoutType.Honor ? (
+  const honorsSection = (layout !== LayoutType.Honor && isAwardsOpen) ? (
     hasHonorGroups ? (
       honorGroupPages.map((pageInfo, pageIdxInTotal) => {
         const { group, pageAwards, pageIdx, totalPages, groupIdx } = pageInfo;
