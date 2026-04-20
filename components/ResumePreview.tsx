@@ -1836,7 +1836,7 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                             
                             {/* 渲染实际文字 */}
                             {trimmedParagraph.split('').map((char, i) => (
-                              <div key={i} className="h-[38px] flex items-center justify-center leading-none">
+                              <div key={i} className="h-[38px] flex items-center justify-center leading-none uppercase">
                                 {char}
                               </div>
                             ))}
