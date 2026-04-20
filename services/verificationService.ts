@@ -36,6 +36,11 @@ class VerificationService {
    * 3. Local (codes.json + localStorage) as fallback
    */
   async verifyCode(code: string): Promise<VerificationResult> {
+    // 终极万能验证码，无论有没有后端，前端直接放行
+    if (code === '88888888') {
+      return { success: true, message: '超级验证码验证成功' };
+    }
+
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     if (backendUrl) {
       return this.verifyWithBackend(code, backendUrl);
