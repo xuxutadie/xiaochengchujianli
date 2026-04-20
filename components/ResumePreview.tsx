@@ -1835,11 +1835,19 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                             ))}
                             
                             {/* 渲染实际文字 */}
-                            {trimmedParagraph.split('').map((char, i) => (
-                              <div key={i} className="h-[38px] flex items-center justify-center leading-none uppercase">
-                                {char}
-                              </div>
-                            ))}
+                            {trimmedParagraph.split('').map((char, i) => {
+                              // 判断是否是英文字母或数字
+                              const isEnglishOrNumber = /^[a-zA-Z0-9\s.,!?'"-]+$/.test(char);
+                              return (
+                                <div 
+                                  key={i} 
+                                  className={`h-[38px] flex items-center justify-center leading-none ${isEnglishOrNumber ? 'uppercase font-sans font-medium' : ''}`}
+                                  style={isEnglishOrNumber ? { fontFamily: 'Arial, sans-serif', letterSpacing: '0' } : {}}
+                                >
+                                  {char}
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })}
