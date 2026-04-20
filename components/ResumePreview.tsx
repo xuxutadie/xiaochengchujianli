@@ -1811,8 +1811,8 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                           {/* 段落首行缩进：2个格子，但如果是“尊敬的老师：”等称呼则不缩进 */}
                           {!(paragraph.startsWith('尊敬的') || paragraph.startsWith('敬爱的') || paragraph.startsWith('您好')) && (
                             <>
-                              <div className="h-[38px]"></div>
-                              <div className="h-[38px]"></div>
+                              <div className="h-[38px] flex items-center justify-center leading-none"></div>
+                              <div className="h-[38px] flex items-center justify-center leading-none"></div>
                             </>
                           )}
                           {paragraph.split('').map((char, i) => (
