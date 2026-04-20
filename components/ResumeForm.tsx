@@ -1208,17 +1208,11 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError, open
               </div>
 
               {/* 分类荣誉列表 */}
-              <div className="space-y-10 pt-8 border-t border-[var(--theme-border)]">                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="space-y-10 pt-8 border-t border-[var(--theme-border)]">
+                {/* 此处原有的分类荣誉图片管理移到了外层以修复括号不匹配问题，此处保留结构 */}
+              </div>
 
-                {/* 旧版证书管理 (仅在有旧数据时显示) - 保留原逻辑作为备用 */}
+              {/* 旧版证书管理 (仅在有旧数据时显示) - 保留原逻辑作为备用 */}
                 {data.certificates && data.certificates.length > 0 && (
                   <div className="space-y-6 pb-8 border-b border-[var(--theme-border)]">
                     <div className="flex items-center justify-between ml-1">
@@ -1540,7 +1534,6 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError, open
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
           )}
         </div>
