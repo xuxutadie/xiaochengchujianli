@@ -1807,20 +1807,34 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                     </div>
                     <div className="flex flex-col text-left text-black">
                       {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => {
-                        // 1. 去除段落开头用户手动输入的所有空格
+                        // 1. 获取段落开头的全角或半角空格数量
+                        const leadingSpacesMatch = paragraph.match(/^[ 　]+/);
+                        const leadingSpaceCount = leadingSpacesMatch ? leadingSpacesMatch[0].length : 0;
+                        
+                        // 2. 去除段落开头用户手动输入的所有空格
                         const trimmedParagraph = paragraph.trimStart();
-                        // 2. 判断是否是称呼行
-                        const isSalutation = trimmedParagraph.startsWith('尊敬的') || trimmedParagraph.startsWith('敬爱的') || trimmedParagraph.startsWith('您好');
+                        
+                        // 3. 判断是否是称呼行（严格匹配称呼）
+                        const isSalutation = trimmedParagraph.startsWith('尊敬的') || trimmedParagraph.startsWith('敬爱的');
+                        
+                        // 4. 计算需要几个前置空格占位符
+                        // 如果是称呼行，用户没输入空格就顶格（0），用户输入了几个空格就空几格
+                        // 如果是普通段落，默认空2格；如果用户手动输入了大于2的空格数，则尊重用户的输入
+                        let emptyCellsCount = 0;
+                        if (isSalutation) {
+                          emptyCellsCount = leadingSpaceCount;
+                        } else {
+                          emptyCellsCount = Math.max(2, leadingSpaceCount);
+                        }
                         
                         return (
                           <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
-                            {/* 段落首行缩进：2个格子，但如果是“尊敬的老师：”等称呼则不缩进 */}
-                            {!isSalutation && (
-                              <>
-                                <div className="h-[38px] flex items-center justify-center leading-none"></div>
-                                <div className="h-[38px] flex items-center justify-center leading-none"></div>
-                              </>
-                            )}
+                            {/* 动态渲染前置空网格 */}
+                            {Array.from({ length: emptyCellsCount }).map((_, i) => (
+                              <div key={`empty-${i}`} className="h-[38px] flex items-center justify-center leading-none"></div>
+                            ))}
+                            
+                            {/* 渲染实际文字 */}
                             {trimmedParagraph.split('').map((char, i) => (
                               <div key={i} className="h-[38px] flex items-center justify-center leading-none">
                                 {char}
