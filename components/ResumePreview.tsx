@@ -1806,22 +1806,29 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                       ))}
                     </div>
                     <div className="flex flex-col text-left text-black">
-                      {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => (
-                        <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
-                          {/* 段落首行缩进：2个格子，但如果是“尊敬的老师：”等称呼则不缩进 */}
-                          {!(paragraph.startsWith('尊敬的') || paragraph.startsWith('敬爱的') || paragraph.startsWith('您好')) && (
-                            <>
-                              <div className="h-[38px] flex items-center justify-center leading-none"></div>
-                              <div className="h-[38px] flex items-center justify-center leading-none"></div>
-                            </>
-                          )}
-                          {paragraph.split('').map((char, i) => (
-                            <div key={i} className="h-[38px] flex items-center justify-center leading-none">
-                              {char}
-                            </div>
-                          ))}
-                        </div>
-                      ))}
+                      {data.coverLetter.split('\n').filter(p => p.trim() !== '').map((paragraph, pIdx) => {
+                        // 1. 去除段落开头用户手动输入的所有空格
+                        const trimmedParagraph = paragraph.trimStart();
+                        // 2. 判断是否是称呼行
+                        const isSalutation = trimmedParagraph.startsWith('尊敬的') || trimmedParagraph.startsWith('敬爱的') || trimmedParagraph.startsWith('您好');
+                        
+                        return (
+                          <div key={pIdx} className="grid grid-cols-[repeat(18,1fr)] w-full">
+                            {/* 段落首行缩进：2个格子，但如果是“尊敬的老师：”等称呼则不缩进 */}
+                            {!isSalutation && (
+                              <>
+                                <div className="h-[38px] flex items-center justify-center leading-none"></div>
+                                <div className="h-[38px] flex items-center justify-center leading-none"></div>
+                              </>
+                            )}
+                            {trimmedParagraph.split('').map((char, i) => (
+                              <div key={i} className="h-[38px] flex items-center justify-center leading-none">
+                                {char}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
