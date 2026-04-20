@@ -424,6 +424,7 @@ function App() {
   const [isResizing, setIsResizing] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
+  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [isGeneratingTempCode, setIsGeneratingTempCode] = useState(false);
@@ -832,7 +833,7 @@ function App() {
           onLayoutChange={(l) => setData({ ...data, layout: l })}
           darkMode={data.darkMode || false}
         />
-        <ResumeForm data={data} onChange={setData} saveError={saveError} />
+        <ResumeForm data={data} onChange={setData} saveError={saveError} openSections={openSections} setOpenSections={setOpenSections} />
       </div>
     </>
   );
@@ -964,6 +965,7 @@ function App() {
                 layoutMode={isPrinting ? 'single' : layoutMode} 
                 isPrinting={isPrinting}
                 showWatermark={isPro ? false : showWatermark} 
+                openSections={openSections}
                 onChange={setData}
               />
            </div>

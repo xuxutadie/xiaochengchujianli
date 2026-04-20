@@ -16,6 +16,8 @@ interface ResumeFormProps {
   data: ResumeData;
   onChange: (data: ResumeData) => void;
   saveError?: boolean;
+  openSections: string[];
+  setOpenSections: (sections: string[] | ((prev: string[]) => string[])) => void;
 }
 
 const AVATAR_SHAPES = [
@@ -100,8 +102,7 @@ const SectionHeader = ({ icon: Icon, title, description, isOpen, onToggle, onAiA
   </div>
 );
 
-const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError }) => {
-  const [openSections, setOpenSections] = useState<string[]>(['cover', 'basicInfo', 'grades', 'quality', 'awards', 'hobbies', 'portfolio', 'socialPractice', 'essays', 'closing']);
+const ResumeForm: React.FC<ResumeFormProps> = ({ data, onChange, saveError, openSections, setOpenSections }) => {
   const [isPolishing, setIsPolishing] = useState<Record<string, boolean>>({});
   const [aiEditConfig, setAiEditConfig] = useState<{
     isOpen: boolean;

@@ -8,6 +8,7 @@ interface ResumePreviewProps {
   layoutMode?: 'single' | 'grid';
   isPrinting?: boolean;
   showWatermark?: boolean;
+  openSections?: string[];
   onChange?: (data: ResumeData) => void;
 }
 
@@ -36,6 +37,7 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
     layoutMode = 'single', 
     isPrinting = false, 
     showWatermark = false,
+    openSections,
     onChange
   } = props;
 
@@ -296,7 +298,7 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
                           data.certLayout === CertLayoutType.Stack ? 3 : 5;
   const certPages = chunk<ImageItem>(combinedCertificates, certItemsPerPage);
   
-  const showPortfolio = !!(data.portfolio.website?.trim() || (data.portfolio.images && data.portfolio.images.length > 0));
+  const showPortfolio = (openSections ? openSections.includes('portfolio') : true) && !!(data.portfolio.website?.trim() || (data.portfolio.images && data.portfolio.images.length > 0));
   const showSocialPractice = !!(data.socialPractice.content?.trim() || (data.socialPractice.images && data.socialPractice.images.length > 0));
   const portfolioOffset = showPortfolio ? 1 : 0;
   const socialPracticeOffset = showSocialPractice ? 1 : 0;
@@ -518,61 +520,94 @@ const ResumePreview = forwardRef(function ResumePreview(props: ResumePreviewProp
         );
       })
     ) : (
-      <div className={`a4-page ${style.pageClass}`}>
-        <PageBackground />
-        <WatermarkOverlay />
-        <StorybookDecoration />
-        <div className={style.headerClass} style={style.headerStyle}>
-          <span className={style.titleClass}>荣誉汇总</span>
-          <span className={style.subTitleClass}>Honors & Awards</span>
-        </div>
-        <div className={style.contentPanelClass}>
-          <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2`}>
-            <div className="space-y-6 flex flex-col justify-start">
-              {data.awards.filter(a => a.name || a.date || a.level).map((award, i) => {
-                const isCompact = data.awards.length > 5;
-                const isUltraCompact = data.awards.length > 8;
-                return (
-                  <div key={i} className="relative">
-                    <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
-                    <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
-                      ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
-                      <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
-                      <div className="relative z-10 flex justify-between items-center">
-                        <div className="flex flex-col min-w-0 flex-1 mr-4">
-                          <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
-                            {award.name || '未命名荣誉'}
-                          </span>
-                          <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
-                            {award.date || '年份未知'}
-                          </span>
-                        </div>
-                        {award.level && (
-                          <span
-                            style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
-                            className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
-                              ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
-                          >
-                            {award.level}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+      (() => {
+        const validAwards = data.awards.filter(a => a.name || a.date || a.level);
+        const paginatedAwards = chunk(validAwards, 10);
+        if (paginatedAwards.length === 0) {
+          return (
+            <div className={`a4-page ${style.pageClass}`}>
+              <PageBackground />
+              <WatermarkOverlay />
+              <StorybookDecoration />
+              <div className={style.headerClass} style={style.headerStyle}>
+                <span className={style.titleClass}>荣誉汇总</span>
+                <span className={style.subTitleClass}>Honors & Awards</span>
+              </div>
+              <div className={style.contentPanelClass}>
+                <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2 h-full`}>
+                  <div className="space-y-6 flex flex-col justify-start"></div>
+                </div>
+              </div>
+              <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length).padStart(2, '0')}</div>
             </div>
-            <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-4
-              ${data.awards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
-              <Star className={`${data.awards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
-              <p className={`font-serif italic text-[var(--theme-readable-primary)] ${data.awards.length > 8 ? 'text-xs' : 'text-sm'}`}>
-                “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
-              </p>
+          );
+        }
+        
+        return paginatedAwards.map((pageAwards, pageIdx) => (
+          <div key={`basic-awards-${pageIdx}`} className={`a4-page ${style.pageClass}`}>
+            <PageBackground />
+            <WatermarkOverlay />
+            <StorybookDecoration />
+            <div className={style.headerClass} style={style.headerStyle}>
+              <span className={style.titleClass}>荣誉汇总</span>
+              <span className={style.subTitleClass}>
+                Honors & Awards
+                {paginatedAwards.length > 1 ? ` (${pageIdx + 1}/${paginatedAwards.length})` : ''}
+              </span>
+            </div>
+            <div className={style.contentPanelClass}>
+              <div className={`relative border-l-2 border-[var(--theme-primary)] pl-8 ml-4 flex flex-col justify-between py-2 h-full`}>
+                <div className="space-y-6 flex flex-col justify-start">
+                  {pageAwards.map((award, i) => {
+                    const isCompact = pageAwards.length > 5;
+                    const isUltraCompact = pageAwards.length > 8;
+                    return (
+                      <div key={i} className="relative">
+                        <div className={`absolute -left-[41px] top-1 w-6 h-6 rounded-full bg-[var(--theme-card)] border-4 border-[var(--theme-primary)] z-10 shadow-sm`} />
+                        <div className={`bg-[var(--theme-card)] rounded-lg border-2 border-[var(--theme-primary)] border-opacity-30 hover:shadow-md transition-all relative group max-w-[92%] overflow-hidden shadow-sm
+                          ${isUltraCompact ? 'p-2' : isCompact ? 'p-3' : 'p-4'}`}>
+                          <div className="absolute inset-0 bg-[var(--theme-primary)] opacity-[0.03] group-hover:opacity-[0.06] transition-opacity" />
+                          <div className="relative z-10 flex justify-between items-center">
+                            <div className="flex flex-col min-w-0 flex-1 mr-4">
+                              <span className={`font-bold text-[var(--theme-readable-primary)] break-words leading-tight ${isUltraCompact ? 'text-sm' : isCompact ? 'text-base' : 'text-lg'}`}>
+                                {award.name || '未命名荣誉'}
+                              </span>
+                              <span className={`text-[var(--theme-readable-primary)]/50 font-medium ${isUltraCompact ? 'text-[10px]' : 'text-xs'}`}>
+                                {award.date || '年份未知'}
+                              </span>
+                            </div>
+                            {award.level && (
+                              <span
+                                style={{ background: 'var(--theme-primary-bg)', color: 'var(--theme-contrast-text)' }}
+                                className={`rounded-md font-black uppercase tracking-wider shadow-sm text-center flex-shrink-0
+                                  ${isUltraCompact ? 'text-[10px] px-3 py-1 min-w-[50px]' : 'text-[14px] px-4 py-1.5 min-w-[80px]'}`}
+                              >
+                                {award.level}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {pageIdx === paginatedAwards.length - 1 && (
+                  <div className={`p-6 bg-[var(--theme-secondary)] rounded-xl text-center opacity-60 mt-auto
+                    ${pageAwards.length > 8 ? 'scale-90 origin-bottom' : ''}`}>
+                    <Star className={`${pageAwards.length > 8 ? 'w-10 h-10' : 'w-16 h-16'} mx-auto mb-2 text-[var(--theme-readable-primary)]`} />
+                    <p className={`font-serif italic text-[var(--theme-readable-primary)] ${pageAwards.length > 8 ? 'text-xs' : 'text-sm'}`}>
+                      “ {data.awardsQuote || '每一份荣誉都是汗水的结晶'} ”
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">
+              {String(3 + qualityPages.length + pageIdx).padStart(2, '0')}
             </div>
           </div>
-        </div>
-        <div className="absolute bottom-4 right-8 text-xs text-[var(--theme-readable-primary)] opacity-40 z-10">{String(3 + qualityPages.length + (hasHonorGroups ? honorPagesCount - 1 : 0)).padStart(2, '0')}</div>
-      </div>
+        ));
+      })()
     )
   ) : null;
 
