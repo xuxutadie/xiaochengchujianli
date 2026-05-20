@@ -296,7 +296,7 @@ app.get('/api/resume/search/:name', async (req, res) => {
 // Admin endpoint to get stats
 app.post('/api/admin/stats', async (req, res) => {
   const { adminKey } = req.body;
-  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const configuredKey = (process.env.ADMIN_KEY || '88888888').trim();
   const providedKey = (adminKey || '').trim();
 
   console.log(`[Admin] Login attempt:
@@ -338,7 +338,7 @@ app.post('/api/admin/stats', async (req, res) => {
 // Admin endpoint: List codes with pagination & filter
 app.post('/api/admin/codes', async (req, res) => {
   const { adminKey, page = 1, limit = 20, search = '', status = 'all' } = req.body;
-  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const configuredKey = (process.env.ADMIN_KEY || '88888888').trim();
   const providedKey = (adminKey || '').trim();
   
   if (!configuredKey || providedKey !== configuredKey) {
@@ -388,7 +388,7 @@ app.post('/api/admin/codes', async (req, res) => {
 // Admin endpoint: Generate random codes
 app.post('/api/admin/generate', async (req, res) => {
   const { adminKey, count = 10, prefix = '' } = req.body;
-  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const configuredKey = (process.env.ADMIN_KEY || '88888888').trim();
   
   if (!configuredKey || (adminKey || '').trim() !== configuredKey) {
     return res.status(403).json({ success: false, message: '无权操作' });
@@ -426,7 +426,7 @@ app.post('/api/admin/generate', async (req, res) => {
 // Admin endpoint: Delete code
 app.post('/api/admin/delete', async (req, res) => {
   const { adminKey, id, type } = req.body; // type: 'single' | 'used'
-  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const configuredKey = (process.env.ADMIN_KEY || '88888888').trim();
   
   if (!configuredKey || (adminKey || '').trim() !== configuredKey) {
     return res.status(403).json({ success: false, message: '无权操作' });
@@ -451,7 +451,7 @@ app.post('/api/admin/delete', async (req, res) => {
 // Admin endpoint to add codes (For initial setup)
 app.post('/api/admin/add-codes', async (req, res) => {
   const { codes, adminKey } = req.body;
-  const configuredKey = (process.env.ADMIN_KEY || '').trim();
+  const configuredKey = (process.env.ADMIN_KEY || '88888888').trim();
   const providedKey = (adminKey || '').trim();
   
   if (!configuredKey || providedKey !== configuredKey) {
